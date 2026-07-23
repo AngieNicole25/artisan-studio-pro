@@ -17,588 +17,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Artisan Studio">
 
-    <style>
-        /* ------------------------------------------
-           VARIABLES Y MODO OSCURO
-        -------------------------------------------- */
-        :root {
-            --bg-color: #f4f7f6;
-            --text-color: #333;
-            --card-bg: #ffffff;
-            --card-alt-bg: #fafafa;
-            --header-bg: #eef7f2;
-            --border-color: #ddd;
-            --primary-color: #4a7c59;
-            --primary-hover: #386144;
-            --dark-panel: #2c4d3d;
-        }
-
-        body.dark-mode {
-            --bg-color: #1a1d24;
-            --text-color: #ecf0f1;
-            --card-bg: #2c3e50;
-            --card-alt-bg: #212f3d;
-            --header-bg: #34495e;
-            --border-color: #415b76;
-            --primary-color: #5dade2;
-            --primary-hover: #3498db;
-            --dark-panel: #1b2631;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            transition: background-color 0.3s ease, color 0.3s ease;
-        }
-
-        /* ------------------------------------------
-           PANTALLAS DE AUTENTICACIÓN (LOGIN / REGISTRO)
-        -------------------------------------------- */
-        #seccion-auth {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--dark-panel);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .auth-box {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            text-align: center;
-            max-width: 360px;
-            width: 90%;
-        }
-
-        .auth-box h3 {
-            color: var(--primary-color);
-            margin-top: 0;
-            margin-bottom: 20px;
-            border-bottom: none;
-        }
-
-        .auth-box input {
-            margin-bottom: 12px;
-            font-size: 14px;
-            padding: 12px;
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            background-color: var(--card-alt-bg);
-            color: var(--text-color);
-        }
-
-        .auth-box button {
-            width: 100%;
-            padding: 12px;
-            margin-top: 8px;
-        }
-
-        .toggle-link {
-            display: block;
-            margin-top: 15px;
-            font-size: 13px;
-            color: #2980b9;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        /* ------------------------------------------
-           APLICACIÓN PRINCIPAL
-        -------------------------------------------- */
-        .container {
-            display: none;
-            background-color: var(--card-bg);
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            max-width: 800px;
-            width: 100%;
-            position: relative;
-        }
-
-        .header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--header-bg);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .header-top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        .global-selectors {
-            display: flex;
-            gap: 8px;
-        }
-
-        .global-selectors select {
-            padding: 6px 10px;
-            font-size: 13px;
-            width: auto;
-            background-color: var(--card-alt-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            color: var(--text-color);
-        }
-
-        .btn-profile-menu {
-            background: var(--header-bg);
-            border: 1px solid var(--primary-color);
-            cursor: pointer;
-            font-size: 14px;
-            padding: 4px 10px;
-            border-radius: 20px;
-            color: var(--text-color);
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.2s;
-        }
-
-        .btn-profile-menu:hover {
-            opacity: 0.8;
-        }
-
-        .header-avatar-mini {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1.5px solid var(--primary-color);
-            background: #fff;
-            display: none;
-        }
-
-        h2 {
-            margin: 0;
-            color: var(--primary-color);
-        }
-
-        h3 {
-            color: var(--primary-color);
-            border-bottom: 2px solid var(--header-bg);
-            padding-bottom: 5px;
-            margin-top: 25px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .item-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr auto;
-            gap: 8px;
-            align-items: end;
-            margin-bottom: 10px;
-        }
-
-        .item-grid-indirectos {
-            display: grid;
-            grid-template-columns: 2fr 1fr auto;
-            gap: 8px;
-            align-items: end;
-            margin-bottom: 10px;
-        }
-
-        .item-grid div,
-        .item-grid-indirectos div {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .item-grid label,
-        .item-grid-indirectos label {
-            font-size: 11px;
-            color: var(--text-color);
-            opacity: 0.8;
-            margin-bottom: 3px;
-        }
-
-        .labor-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
-            background-color: var(--card-alt-bg);
-            padding: 15px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            font-size: 14px;
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            box-sizing: border-box;
-            font-size: 14px;
-            background-color: var(--card-alt-bg);
-            color: var(--text-color);
-        }
-
-        input:focus,
-        select:focus {
-            border-color: var(--primary-color);
-            outline: none;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s, transform 0.1s;
-        }
-
-        button:hover {
-            background-color: var(--primary-hover);
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        .btn-add {
-            background-color: #68a37c;
-            height: 41px;
-        }
-
-        .btn-calc {
-            width: 100%;
-            padding: 14px;
-            font-size: 16px;
-            margin-top: 20px;
-            background-color: var(--dark-panel);
-        }
-
-        .btn-save {
-            background-color: #2980b9;
-            margin-top: 10px;
-            width: 100%;
-            padding: 12px;
-            font-size: 15px;
-        }
-
-        .btn-history-trigger {
-            background-color: #34495e;
-            font-size: 13px;
-            padding: 8px 15px;
-            align-self: center;
-        }
-
-        .table-container {
-            margin: 15px 0;
-            background-color: var(--card-alt-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 5px;
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            min-width: 550px;
-        }
-
-        th,
-        td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th {
-            background-color: var(--header-bg);
-            color: var(--primary-color);
-        }
-
-        .btn-delete {
-            background-color: #e74c3c;
-            padding: 4px 8px;
-            font-size: 11px;
-        }
-
-        .btn-load {
-            background-color: #f39c12;
-            padding: 4px 8px;
-            font-size: 11px;
-        }
-
-        .total-box {
-            text-align: right;
-            padding: 12px;
-            font-weight: bold;
-            background-color: var(--header-bg);
-            color: var(--text-color);
-            font-size: 14px;
-        }
-
-        .live-summary {
-            font-size: 12px;
-            opacity: 0.8;
-            margin-top: 8px;
-            font-style: italic;
-        }
-
-        .results {
-            margin-top: 25px;
-            padding: 20px;
-            background-color: var(--header-bg);
-            border-left: 5px solid var(--dark-panel);
-            border-radius: 4px;
-        }
-
-        .results p {
-            margin: 10px 0;
-            font-size: 15px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .highlight {
-            font-weight: bold;
-            color: var(--primary-color);
-            font-size: 16px;
-        }
-
-        .final-price-box {
-            background-color: var(--card-bg);
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px dashed var(--primary-color);
-            margin-top: 15px;
-        }
-
-        /* MODALES */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background-color: var(--card-bg);
-            color: var(--text-color);
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
-            max-width: 750px;
-            width: 90%;
-            max-height: 85vh;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-
-        .btn-close-modal {
-            background: none;
-            color: var(--text-color);
-            font-size: 24px;
-            border: none;
-            cursor: pointer;
-        }
-
-        .profile-container {
-            text-align: left;
-            padding: 5px 0;
-        }
-
-        .profile-header-card {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: var(--card-alt-bg);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-        }
-
-        .profile-avatar-preview {
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--primary-color);
-            background: var(--header-bg);
-            flex-shrink: 0;
-        }
-
-        .profile-info-text h4 {
-            margin: 0 0 4px 0;
-            color: var(--primary-color);
-            font-size: 16px;
-        }
-
-        .profile-info-text p {
-            margin: 0;
-            font-size: 13px;
-            opacity: 0.7;
-            word-break: break-all;
-        }
-
-        .profile-grid-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        @media (max-width: 500px) {
-            .profile-grid-section {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .profile-section-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--primary-color);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin: 20px 0 10px 0;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 4px;
-        }
-
-        .welcome-card {
-            background: var(--header-bg);
-            border-left: 6px solid var(--dark-panel);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .welcome-card h1 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 26px;
-        }
-
-        .welcome-card p {
-            font-size: 15px;
-            margin-top: 8px;
-            opacity: 0.8;
-        }
-
-        /* ESTILOS DEL INTERRUPTOR DE MODO OSCURO */
-        .theme-switch-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--card-alt-bg);
-            padding: 10px 15px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 15px;
-        }
-
-        .theme-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 26px;
-        }
-
-        .theme-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #27ae60;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(24px);
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
@@ -663,7 +82,8 @@
 
         <div class="form-group"
             style="background-color: var(--card-alt-bg); padding: 15px; border-radius: 5px; border: 1px solid var(--border-color);">
-            <label for="nombreReceta" style="color: var(--primary-color); font-size: 16px;">Nombre del Producto Artesanal:</label>
+            <label for="nombreReceta" style="color: var(--primary-color); font-size: 16px;">Nombre del Producto
+                Artesanal:</label>
             <input type="text" id="nombreReceta" placeholder="Ej: Jabón de Avena y Miel...">
             <label style="margin-top: 12px;">Categoría del Producto:</label>
             <select id="categoriaProducto">
@@ -790,10 +210,10 @@
             <div>
                 <label for="tipoMargen">Tipo de canal de venta:</label>
                 <select id="tipoMargen">
-                    <option value="40">Venta Directa (40% Margen Real)</option>
-                    <option value="50">Venta Premium (50% Margen Real)</option>
-                    <option value="25">Venta Mayorista (25% Margen Real)</option>
-                    <option value="custom">Margen Libre Avanzado (% sobre costo)...</option>
+                    <option value="40">Venta Directa / Redes (40% Margen)</option>
+                    <option value="60">Venta en Tienda Física / Consignación (60% Margen)</option>
+                    <option value="25">Venta Mayorista / Revendedores (25% Margen)</option>
+                    <option value="custom">Margen Libre Personalizado (%)...</option>
                 </select>
             </div>
             <div id="contenedorMargenCustom" style="display: none;">
@@ -809,7 +229,8 @@
             <p>Gasto real en empaques (lote): <span id="resCostoEmpaques" class="highlight">-$</span></p>
             <p>Costos indirectos (lote): <span id="resCostoIndirectos" class="highlight">-$</span></p>
             <p>Costo de mano de obra (lote): <span id="resManoObra" class="highlight">-$</span></p>
-            <p style="border-top: 1px solid var(--border-color); padding-top: 8px;"><strong>Costo TOTAL de fabricación del
+            <p style="border-top: 1px solid var(--border-color); padding-top: 8px;"><strong>Costo TOTAL de fabricación
+                    del
                     lote:</strong> <span id="resCostoLote" class="highlight" style="font-size: 18px;">-$</span></p>
 
             <div class="final-price-box">
@@ -876,10 +297,16 @@
                 </div>
 
                 <div class="profile-section-title">Generar Código de Registro</div>
-                <div class="form-group" style="background: var(--card-alt-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-                    <p style="font-size: 12px; margin: 0 0 10px 0; opacity: 0.8;">Genera un nuevo código para un usuario sin salir de tu sesión:</p>
-                    <button type="button" id="btn-generar-codigo-admin" style="background-color: #27ae60; width: 100%; padding: 10px; font-size: 13px;">⚡ Generar y copiar código nuevo</button>
-                    <div id="resultadoCodigoGenerado" style="margin-top: 8px; font-weight: bold; color: #27ae60; font-size: 14px; text-align: center; display: none;"></div>
+                <div class="form-group"
+                    style="background: var(--card-alt-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <p style="font-size: 12px; margin: 0 0 10px 0; opacity: 0.8;">Genera un nuevo código para un usuario
+                        sin salir de tu sesión:</p>
+                    <button type="button" id="btn-generar-codigo-admin"
+                        style="background-color: #27ae60; width: 100%; padding: 10px; font-size: 13px;">⚡ Generar y
+                        copiar código nuevo</button>
+                    <div id="resultadoCodigoGenerado"
+                        style="margin-top: 8px; font-weight: bold; color: #27ae60; font-size: 14px; text-align: center; display: none;">
+                    </div>
                 </div>
 
                 <div class="profile-section-title">Identidad del Emprendimiento</div>
@@ -917,7 +344,7 @@
 
     <!-- INTEGRACIÓN DE FIREBASE Y LÓGICA GENERAL -->
     <script type="module">
-        import {initializeApp} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
         import {
             getAuth,
             createUserWithEmailAndPassword,
@@ -977,14 +404,14 @@
         }
 
         let paisesConfig = {
-            COP: {nombre: "Colombia", moneda: "COP", locale: "es-CO", tasa: 1},
-            USD: {nombre: "Estados Unidos", moneda: "USD", locale: "en-US", tasa: 0.00025},
-            MXN: {nombre: "México", moneda: "MXN", locale: "es-MX", tasa: 0.0049},
-            ARS: {nombre: "Argentina", moneda: "ARS", locale: "es-AR", tasa: 0.23},
-            CLP: {nombre: "Chile", moneda: "CLP", locale: "es-CL", tasa: 0.24},
-            PEN: {nombre: "Perú", moneda: "PEN", locale: "es-PE", tasa: 0.00093},
-            EUR: {nombre: "España / Eurozona", moneda: "EUR", locale: "es-ES", tasa: 0.00023},
-            ILS: {nombre: "Israel", moneda: "ILS", locale: "he-IL", tasa: 0.00092}
+            COP: { nombre: "Colombia", moneda: "COP", locale: "es-CO", tasa: 1 },
+            USD: { nombre: "Estados Unidos", moneda: "USD", locale: "en-US", tasa: 0.00025 },
+            MXN: { nombre: "México", moneda: "MXN", locale: "es-MX", tasa: 0.0049 },
+            ARS: { nombre: "Argentina", moneda: "ARS", locale: "es-AR", tasa: 0.23 },
+            CLP: { nombre: "Chile", moneda: "CLP", locale: "es-CL", tasa: 0.24 },
+            PEN: { nombre: "Perú", moneda: "PEN", locale: "es-PE", tasa: 0.00093 },
+            EUR: { nombre: "España / Eurozona", moneda: "EUR", locale: "es-ES", tasa: 0.00023 },
+            ILS: { nombre: "Israel", moneda: "ILS", locale: "he-IL", tasa: 0.00092 }
         };
 
         let monedaActual = 'COP';
@@ -1026,7 +453,7 @@
                 if (!respuesta.ok) throw new Error("Fallo en la API");
                 const paises = await respuesta.json();
 
-                paisesConfig = {COP: {nombre: "Colombia", moneda: "COP", locale: "es-CO", tasa: 1}};
+                paisesConfig = { COP: { nombre: "Colombia", moneda: "COP", locale: "es-CO", tasa: 1 } };
 
                 paises.forEach(pais => {
                     if (pais.currencies && Object.keys(pais.currencies).length > 0) {
@@ -1088,8 +515,8 @@
 
         function formatMoney(amount) {
             if (amount === null || amount === undefined || isNaN(amount)) amount = 0;
-            const config = paisesConfig[monedaActual] || {locale: "es-CO", moneda: monedaActual};
-            return new Intl.NumberFormat(config.locale, {style: 'currency', currency: monedaActual}).format(amount);
+            const config = paisesConfig[monedaActual] || { locale: "es-CO", moneda: monedaActual };
+            return new Intl.NumberFormat(config.locale, { style: 'currency', currency: monedaActual }).format(amount);
         }
 
         function actualizarSugerenciasPorCategoria() {
@@ -1184,7 +611,7 @@
                 document.getElementById('contenidoApp').style.display = 'block';
 
                 // --- BLOQUE DE SEGURIDAD PARA EL BOTÓN DE ADMIN ---
-                const tuCorreoAdmin = "angieandrade9601@gmail.com"; 
+                const tuCorreoAdmin = "angieandrade9601@gmail.com";
                 const contenedorAdmin = document.getElementById('btn-generar-codigo-admin').closest('.form-group');
                 const tituloAdmin = contenedorAdmin.previousElementSibling; // El título de la sección
 
@@ -1304,8 +731,8 @@
                 }
 
                 const credencialUsuario = await createUserWithEmailAndPassword(auth, email, clave);
-                await updateProfile(credencialUsuario.user, {displayName: nombre});
-                await updateDoc(docCodigoRef, {usado: true});
+                await updateProfile(credencialUsuario.user, { displayName: nombre });
+                await updateDoc(docCodigoRef, { usado: true });
 
                 alert("✨ ¡Cuenta creada exitosamente y código validado con éxito!");
             } catch (error) {
@@ -1316,7 +743,7 @@
         async function ejecutarLogin() {
             const email = document.getElementById('loginCorreo').value.trim();
             const clave = document.getElementById('loginClave').value;
-            if (!email || !clave) {alert("Ingresa tu correo y contraseña."); return;}
+            if (!email || !clave) { alert("Ingresa tu correo y contraseña."); return; }
 
             try {
                 await signInWithEmailAndPassword(auth, email, clave);
@@ -1340,11 +767,11 @@
             const nuevaClave = document.getElementById('perfilNuevaClave').value;
             const inputArchivo = document.getElementById('perfilFotoArchivo');
 
-            if (!nuevoNombre) {alert("El nombre no puede estar vacío."); return;}
+            if (!nuevoNombre) { alert("El nombre no puede estar vacío."); return; }
 
             if (auth.currentUser) {
                 try {
-                    await updateProfile(auth.currentUser, {displayName: nuevoNombre});
+                    await updateProfile(auth.currentUser, { displayName: nuevoNombre });
 
                     if (inputArchivo.files && inputArchivo.files[0]) {
                         const archivo = inputArchivo.files[0];
@@ -1395,20 +822,20 @@
         document.getElementById('btn-logout-trigger').addEventListener('click', ejecutarLogout);
 
         /* MODALES */
-        function abrirModalRecetas() {document.getElementById('modalRecetas').classList.add('active'); cargarHistorialDOM();}
-        function cerrarModalRecetas() {document.getElementById('modalRecetas').classList.remove('active');}
-        function abrirModalPerfil() {document.getElementById('modalPerfil').classList.add('active');}
-        function cerrarModalPerfil() {document.getElementById('modalPerfil').classList.remove('active');}
+        function abrirModalRecetas() { document.getElementById('modalRecetas').classList.add('active'); cargarHistorialDOM(); }
+        function cerrarModalRecetas() { document.getElementById('modalRecetas').classList.remove('active'); }
+        function abrirModalPerfil() { document.getElementById('modalPerfil').classList.add('active'); }
+        function cerrarModalPerfil() { document.getElementById('modalPerfil').classList.remove('active'); }
 
         document.getElementById('btn-modal-trigger').addEventListener('click', abrirModalRecetas);
         document.getElementById('btn-close-modal-x').addEventListener('click', cerrarModalRecetas);
-        document.getElementById('modalRecetas').addEventListener('click', (e) => {if (e.target.id === 'modalRecetas') cerrarModalRecetas();});
+        document.getElementById('modalRecetas').addEventListener('click', (e) => { if (e.target.id === 'modalRecetas') cerrarModalRecetas(); });
 
         document.getElementById('btn-abrir-perfil').addEventListener('click', abrirModalPerfil);
         document.getElementById('btn-close-perfil-x').addEventListener('click', cerrarModalPerfil);
-        document.getElementById('modalPerfil').addEventListener('click', (e) => {if (e.target.id === 'modalPerfil') cerrarModalPerfil();});
+        document.getElementById('modalPerfil').addEventListener('click', (e) => { if (e.target.id === 'modalPerfil') cerrarModalPerfil(); });
 
-        const INVENTARIO = {ingredientes: [], empaques: [], indirectos: []};
+        const INVENTARIO = { ingredientes: [], empaques: [], indirectos: [] };
         let sumaIngredientes = 0;
         let sumaEmpaques = 0;
         let sumaIndirectos = 0;
@@ -1427,10 +854,10 @@
                 const nombre = nombreInput.value.trim();
                 const costo = numeroSeguro(costoInput.value);
 
-                if (nombre === '') {alert("Escribe el concepto del costo indirecto."); return;}
-                if (costo <= 0) {alert("El costo debe ser mayor que cero."); return;}
+                if (nombre === '') { alert("Escribe el concepto del costo indirecto."); return; }
+                if (costo <= 0) { alert("El costo debe ser mayor que cero."); return; }
 
-                const nuevoItem = {id: Date.now() + Math.random(), nombre, costo};
+                const nuevoItem = { id: Date.now() + Math.random(), nombre, costo };
                 INVENTARIO.indirectos.push(nuevoItem);
 
                 nombreInput.value = ''; costoInput.value = '';
@@ -1451,12 +878,12 @@
             const cantTotal = numeroSeguro(cantTotalInput.value);
             const cantUsada = numeroSeguro(cantUsadaInput.value);
 
-            if (nombre === '') {alert("Escribe el nombre del material."); return;}
-            if (cantTotal <= 0) {alert("La cantidad comprada debe ser mayor que cero."); return;}
-            if (cantUsada <= 0) {alert("La cantidad usada debe ser mayor que cero."); return;}
+            if (nombre === '') { alert("Escribe el nombre del material."); return; }
+            if (cantTotal <= 0) { alert("La cantidad comprada debe ser mayor que cero."); return; }
+            if (cantUsada <= 0) { alert("La cantidad usada debe ser mayor que cero."); return; }
 
             const costoRealUsado = (costo * cantUsada) / cantTotal;
-            const nuevoItem = {id: Date.now() + Math.random(), nombre, costo, cantTotal, cantUsada, costoRealUsado};
+            const nuevoItem = { id: Date.now() + Math.random(), nombre, costo, cantTotal, cantUsada, costoRealUsado };
 
             if (tipo === 'ingrediente') INVENTARIO.ingredientes.push(nuevoItem);
             else INVENTARIO.empaques.push(nuevoItem);
@@ -1546,7 +973,7 @@
             const selector = document.getElementById('tipoMargen').value;
             const contenedorCustom = document.getElementById('contenedorMargenCustom');
             if (selector === 'custom') contenedorCustom.style.display = 'block';
-            else {contenedorCustom.style.display = 'none'; document.getElementById('margen').value = selector;}
+            else { contenedorCustom.style.display = 'none'; document.getElementById('margen').value = selector; }
         }
 
         function calcularCotizacion() {
@@ -1557,7 +984,7 @@
             let margen = numeroSeguro(document.getElementById('margen').value);
 
             if (margen >= 100) margen = 99.99;
-            if (margen <= 0) {alert("El margen debe ser mayor que cero."); return;}
+            if (margen <= 0) { alert("El margen debe ser mayor que cero."); return; }
 
             const costoManoObraTotal = horas * precioHora;
             const costoTotalLote = sumaIngredientes + sumaEmpaques + sumaIndirectos + costoManoObraTotal;
@@ -1597,7 +1024,7 @@
 
         function guardarRecetaEnStorage() {
             const nombreReceta = document.getElementById('nombreReceta').value.trim();
-            if (nombreReceta === '') {alert("Escribe el nombre del producto."); return;}
+            if (nombreReceta === '') { alert("Escribe el nombre del producto."); return; }
 
             const recetaMaestra = {
                 id: Date.now(),
@@ -1606,7 +1033,7 @@
                 ingredientes: [...INVENTARIO.ingredientes],
                 empaques: [...INVENTARIO.empaques],
                 indirectos: [...INVENTARIO.indirectos],
-                calculos: {...globalCalculos},
+                calculos: { ...globalCalculos },
                 fecha: new Date().toISOString()
             };
 
@@ -1636,8 +1063,8 @@
             tbody.innerHTML = '';
             recetasLocales.forEach((receta, index) => {
                 const tempMoneda = receta.calculos.monedaAlGuardar || 'COP';
-                const configHistorica = paisesConfig[tempMoneda] || {locale: "es-CO", moneda: tempMoneda};
-                const formatterHistorico = new Intl.NumberFormat(configHistorica.locale, {style: 'currency', currency: tempMoneda});
+                const configHistorica = paisesConfig[tempMoneda] || { locale: "es-CO", moneda: tempMoneda };
+                const formatterHistorico = new Intl.NumberFormat(configHistorica.locale, { style: 'currency', currency: tempMoneda });
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `<td><strong>${receta.nombre}</strong> <small style="color:#888;">(${tempMoneda})</small></td><td>${formatterHistorico.format(receta.calculos.costoLote)}</td><td>${formatterHistorico.format(receta.calculos.costoUnitario)}</td><td style="color:#c0392b; font-weight:bold;">${formatterHistorico.format(receta.calculos.precioVenta)}</td><td style="text-align: center; display: flex; gap: 5px; justify-content: center;"></td>`;
@@ -1697,7 +1124,7 @@
             calcularManoObraEnTiempoReal();
             calcularCotizacion();
             cerrarModalRecetas();
-            window.scrollTo({top: 0, behavior: 'smooth'});
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         document.getElementById('btn-add-ingrediente').addEventListener('click', () => agregarItem('ingrediente'));
@@ -1705,19 +1132,19 @@
         document.getElementById('btn-add-indirecto').addEventListener('click', () => agregarItem('indirecto'));
 
         document.getElementById('cantUsadaIngrediente').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {e.preventDefault(); agregarItem('ingrediente');}
+            if (e.key === 'Enter') { e.preventDefault(); agregarItem('ingrediente'); }
         });
         document.getElementById('cantUsadaEmpaque').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {e.preventDefault(); agregarItem('empaque');}
+            if (e.key === 'Enter') { e.preventDefault(); agregarItem('empaque'); }
         });
         document.getElementById('costoIndirecto').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {e.preventDefault(); agregarItem('indirecto');}
+            if (e.key === 'Enter') { e.preventDefault(); agregarItem('indirecto'); }
         });
 
-        document.getElementById('unidades').addEventListener('input', () => {calcularManoObraEnTiempoReal(); recalcularSiSeccionActiva();});
-        document.getElementById('horas').addEventListener('input', () => {calcularManoObraEnTiempoReal(); recalcularSiSeccionActiva();});
-        document.getElementById('precioHora').addEventListener('input', () => {calcularManoObraEnTiempoReal(); recalcularSiSeccionActiva();});
-        document.getElementById('tipoMargen').addEventListener('change', () => {toggleMargenPersonalizado(); recalcularSiSeccionActiva();});
+        document.getElementById('unidades').addEventListener('input', () => { calcularManoObraEnTiempoReal(); recalcularSiSeccionActiva(); });
+        document.getElementById('horas').addEventListener('input', () => { calcularManoObraEnTiempoReal(); recalcularSiSeccionActiva(); });
+        document.getElementById('precioHora').addEventListener('input', () => { calcularManoObraEnTiempoReal(); recalcularSiSeccionActiva(); });
+        document.getElementById('tipoMargen').addEventListener('change', () => { toggleMargenPersonalizado(); recalcularSiSeccionActiva(); });
         document.getElementById('margen').addEventListener('input', recalcularSiSeccionActiva);
 
         document.getElementById('btn-calcular-todo').addEventListener('click', calcularCotizacion);
