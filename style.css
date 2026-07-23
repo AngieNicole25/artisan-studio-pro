@@ -589,3 +589,44 @@ input:checked+.slider {
 input:checked+.slider:before {
     transform: translateX(24px);
 }
+
+/* Estilos para el selector de emojis en el perfil */
+.emoji-picker-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+    padding: 5px;
+    background: var(--card-bg);
+    border-radius: 5px;
+}
+
+.emoji-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 50%; /* Botones redondos */
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.emoji-btn:hover {
+    background-color: var(--hover-bg);
+    transform: scale(1.1);
+}
+
+.emoji-btn.selected {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(42, 71, 54, 0.3);
+}
+
+#perfilEmojiInput {
+    display: none;
+}

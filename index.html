@@ -59,7 +59,7 @@
             </div>
             <div>
                 <button class="btn-profile-menu" id="btn-abrir-perfil" title="Menú de Perfil">
-                    <img id="headerAvatarMini" src="" alt="Avatar" class="header-avatar-mini">
+                    <img id="headerAvatarMini" src="" alt="Avatar" class="header-avatar-mini" style="display: none;">
                     <span>☰ Perfil</span>
                 </button>
             </div>
@@ -230,8 +230,7 @@
             <p>Costos indirectos (lote): <span id="resCostoIndirectos" class="highlight">-$</span></p>
             <p>Costo de mano de obra (lote): <span id="resManoObra" class="highlight">-$</span></p>
             <p style="border-top: 1px solid var(--border-color); padding-top: 8px;"><strong>Costo TOTAL de fabricación
-                    del
-                    lote:</strong> <span id="resCostoLote" class="highlight" style="font-size: 18px;">-$</span></p>
+                    del lote:</strong> <span id="resCostoLote" class="highlight" style="font-size: 18px;">-$</span></p>
 
             <div class="final-price-box">
                 <p><strong>Costo real por UNIDAD INDIVIDUAL:</strong> <span id="resCostoUnitario" class="highlight"
@@ -317,10 +316,15 @@
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="perfilEmojiInput">Emoji representativo:</label>
-                        <input type="text" id="perfilEmojiInput" placeholder="Ej: 🌿, 🕯️" maxlength="5">
+                        <input type="hidden" id="perfilEmojiInput" value="🌿">
+                        
+                        <div class="emoji-picker-container" id="selectorEmojiPaleta">
+                            Cargando opciones...
+                        </div>
                     </div>
                 </div>
-                <div class="form-group">
+
+                <div class="form-group" style="margin-top: 15px;">
                     <label for="perfilFotoArchivo">Foto de Perfil (Imagen):</label>
                     <input type="file" id="perfilFotoArchivo" accept="image/*">
                 </div>
@@ -360,6 +364,9 @@
             collection,
             getDocs,
             addDoc,
+            setDoc,
+            getDoc,
+            deleteDoc,
             query,
             where,
             updateDoc,
@@ -381,6 +388,7 @@
         const db = getFirestore(app);
 
         let usuarioActivoEmail = "";
+        let usuarioActivoUid = "";
 
         // --- GESTIÓN DE MODO OSCURO ---
         const toggleModoOscuro = document.getElementById('checkboxModoOscuro');
@@ -443,6 +451,39 @@
             panaderia: ["Bolsa de Papel Kraft con Ventana", "Caja para Pastelería", "Domito Plástico", "Sticker de Sabor / Logo", "Cinta de Panadería"],
             personalizado: ["Caja Decorada", "Bolsa de Papel", "Papel Burbuja", "Etiqueta Personalizada", "Sello de Cera"]
         };
+
+        // --- PALETA DE EMOJIS ---
+        const EMOJIS_DISPONIBLES = [
+            "🌿", "🕯️", "🏺", "🧴", "🍞", "🎁", "🌸", "🧶", "🎨", "💍", 
+            "🍰", "☕", "🧼", "✨", "💖", "🧵", "💎", "🍓", "🍋", "🌵"
+        ];
+
+        function inicializarPaletaEmojis() {
+            const contenedor = document.getElementById('selectorEmojiPaleta');
+            const inputOculto = document.getElementById('perfilEmojiInput');
+            if (!contenedor || !inputOculto) return;
+            
+            contenedor.innerHTML = '';
+
+            EMOJIS_DISPONIBLES.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'emoji-btn';
+                btn.innerText = emoji;
+
+                if (emoji === inputOculto.value) {
+                    btn.classList.add('selected');
+                }
+
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    inputOculto.value = emoji;
+                });
+
+                contenedor.appendChild(btn);
+            });
+        }
 
         async function inicializarSelectorPaises() {
             const selector = document.getElementById('selectorMoneda');
@@ -607,13 +648,14 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 usuarioActivoEmail = user.email;
+                usuarioActivoUid = user.uid;
                 document.getElementById('seccion-auth').style.display = 'none';
                 document.getElementById('contenidoApp').style.display = 'block';
 
                 // --- BLOQUE DE SEGURIDAD PARA EL BOTÓN DE ADMIN ---
                 const tuCorreoAdmin = "angieandrade9601@gmail.com";
                 const contenedorAdmin = document.getElementById('btn-generar-codigo-admin').closest('.form-group');
-                const tituloAdmin = contenedorAdmin.previousElementSibling; // El título de la sección
+                const tituloAdmin = contenedorAdmin.previousElementSibling; 
 
                 if (user.email === tuCorreoAdmin) {
                     contenedorAdmin.style.display = 'block';
@@ -624,16 +666,30 @@
                 }
                 // --------------------------------------------------
 
-                const nombreEmprendimiento = user.displayName ? user.displayName : "Mi Emprendimiento";
-                const emojiGuardado = localStorage.getItem(`emoji_${usuarioActivoEmail}`) || "🌿";
-                const fotoGuardada = localStorage.getItem(`foto_${usuarioActivoEmail}`) || "";
+                let nombreEmprendimiento = user.displayName ? user.displayName : "Mi Emprendimiento";
+                let emojiGuardado = "🌿";
+                let fotoGuardada = "";
+
+                // Leer datos del perfil desde Firestore para sincronización en la nube
+                try {
+                    const docPerfilRef = doc(db, "perfiles_usuarios", usuarioActivoUid);
+                    const docPerfilSnap = await getDoc(docPerfilRef);
+                    if (docPerfilSnap.exists()) {
+                        const dataPerfil = docPerfilSnap.data();
+                        if (dataPerfil.nombreEmprendimiento) nombreEmprendimiento = dataPerfil.nombreEmprendimiento;
+                        if (dataPerfil.emoji) emojiGuardado = dataPerfil.emoji;
+                        if (dataPerfil.fotoUrl) fotoGuardada = dataPerfil.fotoUrl;
+                    }
+                } catch (e) {
+                    console.error("Error al cargar perfil de Firestore:", e);
+                }
 
                 document.getElementById('textoNombreHeader').innerText = nombreEmprendimiento;
                 document.getElementById('emojiHeader').innerText = emojiGuardado;
 
                 document.getElementById('perfilHeaderNombreLabel').innerText = nombreEmprendimiento;
                 document.getElementById('perfilMostrarCorreo').innerText = user.email;
-                document.getElementById('perfilNombreInput').value = user.displayName ? user.displayName : "";
+                document.getElementById('perfilNombreInput').value = nombreEmprendimiento;
                 document.getElementById('perfilEmojiInput').value = emojiGuardado;
 
                 if (fotoGuardada) {
@@ -644,11 +700,14 @@
                     const headerAvatar = document.getElementById('headerAvatarMini');
                     headerAvatar.src = fotoGuardada;
                     headerAvatar.style.display = 'block';
+                } else {
+                    document.getElementById('perfilAvatarImg').style.display = 'none';
+                    document.getElementById('headerAvatarMini').style.display = 'none';
                 }
 
                 await inicializarSelectorPaises();
                 actualizarSugerenciasPorCategoria();
-                actualizarContadorRecetas();
+                await actualizarContadorRecetas();
 
                 const langGuardado = localStorage.getItem('cotizador_idioma') || 'es';
                 const monedaGuardada = localStorage.getItem('cotizador_moneda') || 'COP';
@@ -658,6 +717,7 @@
                 cambiarIdiomaUI(langGuardado);
             } else {
                 usuarioActivoEmail = "";
+                usuarioActivoUid = "";
                 document.getElementById('seccion-auth').style.display = 'flex';
                 document.getElementById('contenidoApp').style.display = 'none';
             }
@@ -684,7 +744,6 @@
                     creadoEl: new Date()
                 });
 
-                // Copiar automáticamente al portapapeles y mostrar en pantalla
                 await navigator.clipboard.writeText(nuevoCodigoStr);
                 const cajaResultado = document.getElementById('resultadoCodigoGenerado');
                 cajaResultado.innerText = `✅ ¡Código: ${nuevoCodigoStr} (¡Copiado!)`;
@@ -734,6 +793,13 @@
                 await updateProfile(credencialUsuario.user, { displayName: nombre });
                 await updateDoc(docCodigoRef, { usado: true });
 
+                // Crear su documento inicial en Firestore para el perfil
+                await setDoc(doc(db, "perfiles_usuarios", credencialUsuario.user.uid), {
+                    nombreEmprendimiento: nombre,
+                    emoji: "🌿",
+                    fotoUrl: ""
+                });
+
                 alert("✨ ¡Cuenta creada exitosamente y código validado con éxito!");
             } catch (error) {
                 alert('Error: ' + error.message);
@@ -773,22 +839,28 @@
                 try {
                     await updateProfile(auth.currentUser, { displayName: nuevoNombre });
 
+                    let fotoFinalURL = "";
+                    const avatarModal = document.getElementById('perfilAvatarImg');
+                    const headerAvatar = document.getElementById('headerAvatarMini');
+
+                    if (avatarModal.src && avatarModal.style.display === 'block') {
+                        fotoFinalURL = avatarModal.src;
+                    }
+
                     if (inputArchivo.files && inputArchivo.files[0]) {
                         const archivo = inputArchivo.files[0];
-                        const fotoFinalURL = await new Promise((resolve, reject) => {
+                        fotoFinalURL = await new Promise((resolve, reject) => {
                             const reader = new FileReader();
                             reader.onload = (e) => resolve(e.target.result);
                             reader.onerror = (error) => reject(error);
                             reader.readAsDataURL(archivo);
                         });
+                    }
 
-                        localStorage.setItem(`foto_${usuarioActivoEmail}`, fotoFinalURL);
-
-                        const avatarModal = document.getElementById('perfilAvatarImg');
+                    if (fotoFinalURL) {
                         avatarModal.src = fotoFinalURL;
                         avatarModal.style.display = 'block';
 
-                        const headerAvatar = document.getElementById('headerAvatarMini');
                         headerAvatar.src = fotoFinalURL;
                         headerAvatar.style.display = 'block';
                     }
@@ -802,13 +874,18 @@
                         document.getElementById('perfilNuevaClave').value = "";
                     }
 
-                    localStorage.setItem(`emoji_${usuarioActivoEmail}`, nuevoEmoji);
+                    // Guardar perfil en la nube (Firestore) para que se sincronice en todos los dispositivos
+                    await setDoc(doc(db, "perfiles_usuarios", usuarioActivoUid), {
+                        nombreEmprendimiento: nuevoNombre,
+                        emoji: nuevoEmoji,
+                        fotoUrl: fotoFinalURL
+                    }, { merge: true });
 
                     document.getElementById('textoNombreHeader').innerText = nuevoNombre;
                     document.getElementById('emojiHeader').innerText = nuevoEmoji;
                     document.getElementById('perfilHeaderNombreLabel').innerText = nuevoNombre;
 
-                    alert("✨ ¡Perfil y configuración actualizados con éxito!");
+                    alert("✨ ¡Perfil y configuración actualizados y sincronizados en la nube!");
                     cerrarModalPerfil();
                 } catch (error) {
                     alert("Error al actualizar: " + error.message);
@@ -824,7 +901,12 @@
         /* MODALES */
         function abrirModalRecetas() { document.getElementById('modalRecetas').classList.add('active'); cargarHistorialDOM(); }
         function cerrarModalRecetas() { document.getElementById('modalRecetas').classList.remove('active'); }
-        function abrirModalPerfil() { document.getElementById('modalPerfil').classList.add('active'); }
+        
+        function abrirModalPerfil() { 
+            document.getElementById('modalPerfil').classList.add('active'); 
+            inicializarPaletaEmojis(); // Inicializa los emojis al abrir el modal
+        }
+        
         function cerrarModalPerfil() { document.getElementById('modalPerfil').classList.remove('active'); }
 
         document.getElementById('btn-modal-trigger').addEventListener('click', abrirModalRecetas);
@@ -1018,16 +1100,13 @@
             document.getElementById('seccionResultados').style.display = 'block';
         }
 
-        function obtenerKeyStorage() {
-            return `recetas_${usuarioActivoEmail.toLowerCase().replace(/[^a-z0-9]/g, "_")}`;
-        }
-
-        function guardarRecetaEnStorage() {
+        // --- GESTIÓN DE PRODUCTOS EN FIRESTORE (NUBE) ---
+        async function guardarRecetaEnStorage() {
             const nombreReceta = document.getElementById('nombreReceta').value.trim();
             if (nombreReceta === '') { alert("Escribe el nombre del producto."); return; }
 
             const recetaMaestra = {
-                id: Date.now(),
+                userId: usuarioActivoUid,
                 nombre: nombreReceta,
                 categoria: document.getElementById('categoriaProducto').value,
                 ingredientes: [...INVENTARIO.ingredientes],
@@ -1037,69 +1116,96 @@
                 fecha: new Date().toISOString()
             };
 
-            const key = obtenerKeyStorage();
-            let recetasLocales = JSON.parse(localStorage.getItem(key)) || [];
-            recetasLocales = recetasLocales.filter(r => r.nombre.toLowerCase() !== nombreReceta.toLowerCase());
-            recetasLocales.push(recetaMaestra);
+            try {
+                const q = query(
+                    collection(db, "productos_guardados"),
+                    where("userId", "==", usuarioActivoUid),
+                    where("nombre", "==", nombreReceta)
+                );
+                const querySnapshot = await getDocs(q);
 
-            localStorage.setItem(key, JSON.stringify(recetasLocales));
-            alert(`¡Producto "${nombreReceta}" guardado con éxito!`);
-            actualizarContadorRecetas();
-        }
+                if (!querySnapshot.empty) {
+                    const docId = querySnapshot.docs[0].id;
+                    await updateDoc(doc(db, "productos_guardados", docId), recetaMaestra);
+                } else {
+                    await addDoc(collection(db, "productos_guardados"), recetaMaestra);
+                }
 
-        function actualizarContadorRecetas() {
-            if (!usuarioActivoEmail) return;
-            const recetasLocales = JSON.parse(localStorage.getItem(obtenerKeyStorage())) || [];
-            document.getElementById('contadorRecetas').innerText = recetasLocales.length;
-        }
-
-        function cargarHistorialDOM() {
-            const tbody = document.getElementById('listaRecetasGuardadas');
-            const recetasLocales = JSON.parse(localStorage.getItem(obtenerKeyStorage())) || [];
-            if (recetasLocales.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #777;">No tienes productos guardados aún.</td></tr>`;
-                return;
+                alert(`¡Producto "${nombreReceta}" guardado y sincronizado en la nube con éxito!`);
+                await actualizarContadorRecetas();
+            } catch (error) {
+                console.error("Error al guardar receta en Firestore: ", error);
+                alert("Error al guardar en la nube: " + error.message);
             }
-            tbody.innerHTML = '';
-            recetasLocales.forEach((receta, index) => {
-                const tempMoneda = receta.calculos.monedaAlGuardar || 'COP';
-                const configHistorica = paisesConfig[tempMoneda] || { locale: "es-CO", moneda: tempMoneda };
-                const formatterHistorico = new Intl.NumberFormat(configHistorica.locale, { style: 'currency', currency: tempMoneda });
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `<td><strong>${receta.nombre}</strong> <small style="color:#888;">(${tempMoneda})</small></td><td>${formatterHistorico.format(receta.calculos.costoLote)}</td><td>${formatterHistorico.format(receta.calculos.costoUnitario)}</td><td style="color:#c0392b; font-weight:bold;">${formatterHistorico.format(receta.calculos.precioVenta)}</td><td style="text-align: center; display: flex; gap: 5px; justify-content: center;"></td>`;
-
-                const btnLoad = document.createElement('button');
-                btnLoad.className = 'btn-load';
-                btnLoad.innerText = '📂 Cargar';
-                btnLoad.onclick = () => cargarRecetaEspecifica(index);
-
-                const btnDel = document.createElement('button');
-                btnDel.className = 'btn-delete';
-                btnDel.innerText = 'Borrar';
-                btnDel.onclick = () => eliminarRecetaStorage(receta.nombre);
-
-                tr.lastElementChild.appendChild(btnLoad);
-                tr.lastElementChild.appendChild(btnDel);
-                tbody.appendChild(tr);
-            });
         }
 
-        function eliminarRecetaStorage(nombre) {
-            if (!confirm(`¿Eliminar "${nombre}"?`)) return;
-            const key = obtenerKeyStorage();
-            let recetasLocales = JSON.parse(localStorage.getItem(key)) || [];
-            recetasLocales = recetasLocales.filter(r => r.nombre !== nombre);
-            localStorage.setItem(key, JSON.stringify(recetasLocales));
-            cargarHistorialDOM();
-            actualizarContadorRecetas();
+        async function actualizarContadorRecetas() {
+            if (!usuarioActivoUid) return;
+            try {
+                const q = query(collection(db, "productos_guardados"), where("userId", "==", usuarioActivoUid));
+                const querySnapshot = await getDocs(q);
+                document.getElementById('contadorRecetas').innerText = querySnapshot.size;
+            } catch (error) {
+                console.error("Error al contar recetas:", error);
+            }
         }
 
-        function cargarRecetaEspecifica(index) {
-            const recetasLocales = JSON.parse(localStorage.getItem(obtenerKeyStorage())) || [];
-            const receta = recetasLocales[index];
-            if (!receta) return;
+        async function cargarHistorialDOM() {
+            const tbody = document.getElementById('listaRecetasGuardadas');
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #777;">Cargando desde la nube...</td></tr>`;
 
+            try {
+                const q = query(collection(db, "productos_guardados"), where("userId", "==", usuarioActivoUid));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #777;">No tienes productos guardados aún.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                querySnapshot.forEach((documento) => {
+                    const receta = documento.data();
+                    const docId = documento.id;
+                    const tempMoneda = receta.calculos.monedaAlGuardar || 'COP';
+                    const configHistorica = paisesConfig[tempMoneda] || { locale: "es-CO", moneda: tempMoneda };
+                    const formatterHistorico = new Intl.NumberFormat(configHistorica.locale, { style: 'currency', currency: tempMoneda });
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td><strong>${receta.nombre}</strong> <small style="color:#888;">(${tempMoneda})</small></td><td>${formatterHistorico.format(receta.calculos.costoLote)}</td><td>${formatterHistorico.format(receta.calculos.costoUnitario)}</td><td style="color:#c0392b; font-weight:bold;">${formatterHistorico.format(receta.calculos.precioVenta)}</td><td style="text-align: center; display: flex; gap: 5px; justify-content: center;"></td>`;
+
+                    const btnLoad = document.createElement('button');
+                    btnLoad.className = 'btn-load';
+                    btnLoad.innerText = '📂 Cargar';
+                    btnLoad.onclick = () => cargarRecetaEspecifica(receta);
+
+                    const btnDel = document.createElement('button');
+                    btnDel.className = 'btn-delete';
+                    btnDel.innerText = 'Borrar';
+                    btnDel.onclick = () => eliminarRecetaStorage(docId, receta.nombre);
+
+                    tr.lastElementChild.appendChild(btnLoad);
+                    tr.lastElementChild.appendChild(btnDel);
+                    tbody.appendChild(tr);
+                });
+            } catch (error) {
+                console.error("Error al cargar historial:", error);
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #e74c3c;">Error al cargar datos.</td></tr>`;
+            }
+        }
+
+        async function eliminarRecetaStorage(docId, nombre) {
+            if (!confirm(`¿Eliminar "${nombre}" de la nube?`)) return;
+            try {
+                await deleteDoc(doc(db, "productos_guardados", docId));
+                await cargarHistorialDOM();
+                await actualizarContadorRecetas();
+            } catch (error) {
+                alert("Error al eliminar: " + error.message);
+            }
+        }
+
+        function cargarRecetaEspecifica(receta) {
             document.getElementById('nombreReceta').value = receta.nombre;
             document.getElementById('categoriaProducto').value = receta.categoria || 'jabones';
             actualizarSugerenciasPorCategoria();
