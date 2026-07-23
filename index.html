@@ -58,9 +58,11 @@
                 </select>
             </div>
             <div>
+                <!-- BOTÓN MINIMALISTA: SOLO FOTO/AVATAR Y LAS 3 LÍNEAS -->
                 <button class="btn-profile-menu" id="btn-abrir-perfil" title="Menú de Perfil">
                     <img id="headerAvatarMini" src="" alt="Avatar" class="header-avatar-mini" style="display: none;">
-                    <span>☰ Perfil</span>
+                    <span id="headerAvatarFallback" class="header-avatar-fallback" style="display: inline-block;">🌿</span>
+                    <span>☰</span>
                 </button>
             </div>
         </div>
@@ -452,7 +454,6 @@
             personalizado: ["Caja Decorada", "Bolsa de Papel", "Papel Burbuja", "Etiqueta Personalizada", "Sello de Cera"]
         };
 
-        // --- PALETA DE EMOJIS ---
         const EMOJIS_DISPONIBLES = [
             "🌿", "🕯️", "🏺", "🧴", "🍞", "🎁", "🌸", "🧶", "🎨", "💍", 
             "🍰", "☕", "🧼", "✨", "💖", "🧵", "💎", "🍓", "🍋", "🌵"
@@ -652,7 +653,6 @@
                 document.getElementById('seccion-auth').style.display = 'none';
                 document.getElementById('contenidoApp').style.display = 'block';
 
-                // --- BLOQUE DE SEGURIDAD PARA EL BOTÓN DE ADMIN ---
                 const tuCorreoAdmin = "angieandrade9601@gmail.com";
                 const contenedorAdmin = document.getElementById('btn-generar-codigo-admin').closest('.form-group');
                 const tituloAdmin = contenedorAdmin.previousElementSibling; 
@@ -664,13 +664,11 @@
                     contenedorAdmin.style.display = 'none';
                     if (tituloAdmin) tituloAdmin.style.display = 'none';
                 }
-                // --------------------------------------------------
 
                 let nombreEmprendimiento = user.displayName ? user.displayName : "Mi Emprendimiento";
                 let emojiGuardado = "🌿";
                 let fotoGuardada = "";
 
-                // Leer datos del perfil desde Firestore para sincronización en la nube
                 try {
                     const docPerfilRef = doc(db, "perfiles_usuarios", usuarioActivoUid);
                     const docPerfilSnap = await getDoc(docPerfilRef);
@@ -684,6 +682,7 @@
                     console.error("Error al cargar perfil de Firestore:", e);
                 }
 
+                // Renderizar datos en UI con control seguro de avatares
                 document.getElementById('textoNombreHeader').innerText = nombreEmprendimiento;
                 document.getElementById('emojiHeader').innerText = emojiGuardado;
 
@@ -692,17 +691,22 @@
                 document.getElementById('perfilNombreInput').value = nombreEmprendimiento;
                 document.getElementById('perfilEmojiInput').value = emojiGuardado;
 
+                const avatarModal = document.getElementById('perfilAvatarImg');
+                const headerAvatar = document.getElementById('headerAvatarMini');
+                const headerFallback = document.getElementById('headerAvatarFallback');
+
                 if (fotoGuardada) {
-                    const avatarModal = document.getElementById('perfilAvatarImg');
                     avatarModal.src = fotoGuardada;
                     avatarModal.style.display = 'block';
 
-                    const headerAvatar = document.getElementById('headerAvatarMini');
                     headerAvatar.src = fotoGuardada;
                     headerAvatar.style.display = 'block';
+                    headerFallback.style.display = 'none';
                 } else {
-                    document.getElementById('perfilAvatarImg').style.display = 'none';
-                    document.getElementById('headerAvatarMini').style.display = 'none';
+                    avatarModal.style.display = 'none';
+                    headerAvatar.style.display = 'none';
+                    headerFallback.innerText = emojiGuardado;
+                    headerFallback.style.display = 'inline-block';
                 }
 
                 await inicializarSelectorPaises();
@@ -732,7 +736,6 @@
             document.getElementById('box-registro').style.display = 'none';
         });
 
-        // --- BOTÓN GENERAR CÓDIGO DESDE EL PERFIL (ADMIN) ---
         async function generarNuevoCodigoAdmin() {
             const randomNum = Math.floor(1000 + Math.random() * 9000);
             const nuevoCodigoStr = `ARTISAN-${randomNum}`;
@@ -793,7 +796,6 @@
                 await updateProfile(credencialUsuario.user, { displayName: nombre });
                 await updateDoc(docCodigoRef, { usado: true });
 
-                // Crear su documento inicial en Firestore para el perfil
                 await setDoc(doc(db, "perfiles_usuarios", credencialUsuario.user.uid), {
                     nombreEmprendimiento: nombre,
                     emoji: "🌿",
@@ -837,11 +839,10 @@
 
             if (auth.currentUser) {
                 try {
-                    await updateProfile(auth.currentUser, { displayName: nuevoNombre });
-
                     let fotoFinalURL = "";
                     const avatarModal = document.getElementById('perfilAvatarImg');
                     const headerAvatar = document.getElementById('headerAvatarMini');
+                    const headerFallback = document.getElementById('headerAvatarFallback');
 
                     if (avatarModal.src && avatarModal.style.display === 'block') {
                         fotoFinalURL = avatarModal.src;
@@ -857,13 +858,28 @@
                         });
                     }
 
+                    // --- ACTUALIZACIÓN OPTIMISTA INSTANTÁNEA ---
+                    document.getElementById('textoNombreHeader').innerText = nuevoNombre;
+                    document.getElementById('emojiHeader').innerText = nuevoEmoji;
+                    document.getElementById('perfilHeaderNombreLabel').innerText = nuevoNombre;
+
                     if (fotoFinalURL) {
                         avatarModal.src = fotoFinalURL;
                         avatarModal.style.display = 'block';
 
                         headerAvatar.src = fotoFinalURL;
                         headerAvatar.style.display = 'block';
+                        headerFallback.style.display = 'none';
+                    } else {
+                        headerAvatar.style.display = 'none';
+                        headerFallback.innerText = nuevoEmoji;
+                        headerFallback.style.display = 'inline-block';
                     }
+
+                    cerrarModalPerfil(); // Cierra el modal de inmediato sin esperas visuales
+
+                    // --- PROCESAMIENTO EN SEGUNDO PLANO ---
+                    await updateProfile(auth.currentUser, { displayName: nuevoNombre });
 
                     if (nuevaClave.trim() !== "") {
                         if (nuevaClave.length < 6) {
@@ -874,19 +890,12 @@
                         document.getElementById('perfilNuevaClave').value = "";
                     }
 
-                    // Guardar perfil en la nube (Firestore) para que se sincronice en todos los dispositivos
                     await setDoc(doc(db, "perfiles_usuarios", usuarioActivoUid), {
                         nombreEmprendimiento: nuevoNombre,
                         emoji: nuevoEmoji,
                         fotoUrl: fotoFinalURL
                     }, { merge: true });
 
-                    document.getElementById('textoNombreHeader').innerText = nuevoNombre;
-                    document.getElementById('emojiHeader').innerText = nuevoEmoji;
-                    document.getElementById('perfilHeaderNombreLabel').innerText = nuevoNombre;
-
-                    alert("✨ ¡Perfil y configuración actualizados y sincronizados en la nube!");
-                    cerrarModalPerfil();
                 } catch (error) {
                     alert("Error al actualizar: " + error.message);
                 }
@@ -898,13 +907,12 @@
         document.getElementById('btn-actualizar-nombre-perfil').addEventListener('click', actualizarPerfilUsuario);
         document.getElementById('btn-logout-trigger').addEventListener('click', ejecutarLogout);
 
-        /* MODALES */
         function abrirModalRecetas() { document.getElementById('modalRecetas').classList.add('active'); cargarHistorialDOM(); }
         function cerrarModalRecetas() { document.getElementById('modalRecetas').classList.remove('active'); }
         
         function abrirModalPerfil() { 
             document.getElementById('modalPerfil').classList.add('active'); 
-            inicializarPaletaEmojis(); // Inicializa los emojis al abrir el modal
+            inicializarPaletaEmojis(); 
         }
         
         function cerrarModalPerfil() { document.getElementById('modalPerfil').classList.remove('active'); }
@@ -1100,7 +1108,6 @@
             document.getElementById('seccionResultados').style.display = 'block';
         }
 
-        // --- GESTIÓN DE PRODUCTOS EN FIRESTORE (NUBE) ---
         async function guardarRecetaEnStorage() {
             const nombreReceta = document.getElementById('nombreReceta').value.trim();
             if (nombreReceta === '') { alert("Escribe el nombre del producto."); return; }
@@ -1258,9 +1265,6 @@
 
         calcularManoObraEnTiempoReal();
 
-        /* ==========================================
-           REGISTRO DEL SERVICE WORKER PARA PWA
-        =========================================== */
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
