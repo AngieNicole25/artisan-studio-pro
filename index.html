@@ -665,27 +665,14 @@
                     if (tituloAdmin) tituloAdmin.style.display = 'none';
                 }
 
-                let nombreEmprendimiento = user.displayName ? user.displayName : "Mi Emprendimiento";
-                let emojiGuardado = "🌿";
-                let fotoGuardada = "";
+                // 1. CARGA INMEDIATA DESDE LOCALSTORAGE (Evita el retraso visual)
+                let nombreEmprendimiento = localStorage.getItem(`cache_nombre_${usuarioActivoUid}`) || (user.displayName ? user.displayName : "Mi Emprendimiento");
+                let emojiGuardado = localStorage.getItem(`cache_emoji_${usuarioActivoUid}`) || "🌿";
+                let fotoGuardada = localStorage.getItem(`cache_foto_${usuarioActivoUid}`) || "";
 
-                try {
-                    const docPerfilRef = doc(db, "perfiles_usuarios", usuarioActivoUid);
-                    const docPerfilSnap = await getDoc(docPerfilRef);
-                    if (docPerfilSnap.exists()) {
-                        const dataPerfil = docPerfilSnap.data();
-                        if (dataPerfil.nombreEmprendimiento) nombreEmprendimiento = dataPerfil.nombreEmprendimiento;
-                        if (dataPerfil.emoji) emojiGuardado = dataPerfil.emoji;
-                        if (dataPerfil.fotoUrl) fotoGuardada = dataPerfil.fotoUrl;
-                    }
-                } catch (e) {
-                    console.error("Error al cargar perfil de Firestore:", e);
-                }
-
-                // Renderizar datos en UI con control seguro de avatares
+                // Pintar de inmediato en la UI
                 document.getElementById('textoNombreHeader').innerText = nombreEmprendimiento;
                 document.getElementById('emojiHeader').innerText = emojiGuardado;
-
                 document.getElementById('perfilHeaderNombreLabel').innerText = nombreEmprendimiento;
                 document.getElementById('perfilMostrarCorreo').innerText = user.email;
                 document.getElementById('perfilNombreInput').value = nombreEmprendimiento;
@@ -698,7 +685,6 @@
                 if (fotoGuardada) {
                     avatarModal.src = fotoGuardada;
                     avatarModal.style.display = 'block';
-
                     headerAvatar.src = fotoGuardada;
                     headerAvatar.style.display = 'block';
                     headerFallback.style.display = 'none';
@@ -707,6 +693,49 @@
                     headerAvatar.style.display = 'none';
                     headerFallback.innerText = emojiGuardado;
                     headerFallback.style.display = 'inline-block';
+                }
+
+                // 2. SINCRONIZACIÓN EN SEGUNDO PLANO CON FIRESTORE
+                try {
+                    const docPerfilRef = doc(db, "perfiles_usuarios", usuarioActivoUid);
+                    const docPerfilSnap = await getDoc(docPerfilRef);
+                    if (docPerfilSnap.exists()) {
+                        const dataPerfil = docPerfilSnap.data();
+                        if (dataPerfil.nombreEmprendimiento) {
+                            nombreEmprendimiento = dataPerfil.nombreEmprendimiento;
+                            localStorage.setItem(`cache_nombre_${usuarioActivoUid}`, nombreEmprendimiento);
+                            document.getElementById('textoNombreHeader').innerText = nombreEmprendimiento;
+                            document.getElementById('perfilHeaderNombreLabel').innerText = nombreEmprendimiento;
+                            document.getElementById('perfilNombreInput').value = nombreEmprendimiento;
+                        }
+                        if (dataPerfil.emoji) {
+                            emojiGuardado = dataPerfil.emoji;
+                            localStorage.setItem(`cache_emoji_${usuarioActivoUid}`, emojiGuardado);
+                            document.getElementById('emojiHeader').innerText = emojiGuardado;
+                            document.getElementById('perfilEmojiInput').value = emojiGuardado;
+                            if (!fotoGuardada) {
+                                headerFallback.innerText = emojiGuardado;
+                            }
+                        }
+                        if (dataPerfil.fotoUrl !== undefined) {
+                            fotoGuardada = dataPerfil.fotoUrl;
+                            localStorage.setItem(`cache_foto_${usuarioActivoUid}`, fotoGuardada);
+                            if (fotoGuardada) {
+                                avatarModal.src = fotoGuardada;
+                                avatarModal.style.display = 'block';
+                                headerAvatar.src = fotoGuardada;
+                                headerAvatar.style.display = 'block';
+                                headerFallback.style.display = 'none';
+                            } else {
+                                avatarModal.style.display = 'none';
+                                headerAvatar.style.display = 'none';
+                                headerFallback.innerText = emojiGuardado;
+                                headerFallback.style.display = 'inline-block';
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error al sincronizar perfil de Firestore:", e);
                 }
 
                 await inicializarSelectorPaises();
@@ -796,6 +825,11 @@
                 await updateProfile(credencialUsuario.user, { displayName: nombre });
                 await updateDoc(docCodigoRef, { usado: true });
 
+                // Guardar en localStorage caché inicial
+                localStorage.setItem(`cache_nombre_${credencialUsuario.user.uid}`, nombre);
+                localStorage.setItem(`cache_emoji_${credencialUsuario.user.uid}`, "🌿");
+                localStorage.setItem(`cache_foto_${credencialUsuario.user.uid}`, "");
+
                 await setDoc(doc(db, "perfiles_usuarios", credencialUsuario.user.uid), {
                     nombreEmprendimiento: nombre,
                     emoji: "🌿",
@@ -858,10 +892,14 @@
                         });
                     }
 
-                    // --- ACTUALIZACIÓN OPTIMISTA INSTANTÁNEA ---
+                    // --- ACTUALIZACIÓN OPTIMISTA INSTANTÁNEA & CACHÉ LOCAL ---
                     document.getElementById('textoNombreHeader').innerText = nuevoNombre;
                     document.getElementById('emojiHeader').innerText = nuevoEmoji;
                     document.getElementById('perfilHeaderNombreLabel').innerText = nuevoNombre;
+
+                    localStorage.setItem(`cache_nombre_${usuarioActivoUid}`, nuevoNombre);
+                    localStorage.setItem(`cache_emoji_${usuarioActivoUid}`, nuevoEmoji);
+                    localStorage.setItem(`cache_foto_${usuarioActivoUid}`, fotoFinalURL);
 
                     if (fotoFinalURL) {
                         avatarModal.src = fotoFinalURL;
