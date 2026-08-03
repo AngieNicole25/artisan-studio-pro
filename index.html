@@ -1164,31 +1164,26 @@
             const horas = Math.max(0, parseFloat(document.getElementById('horas').value) || 0);
             const precioHora = Math.max(0, parseFloat(document.getElementById('precioHora').value) || 0);
             const selector = document.getElementById('tipoMargen').value;
+            
+            // Obtener el valor del margen de forma segura
             let margen = numeroSeguro(document.getElementById('margen').value);
 
             if (selector === 'custom') {
                 if (margen <= 0) margen = 1;
-                if (margen > 500) margen = 500; 
+                if (margen > 500) margen = 500; // Límite razonable
             } else {
-                if (margen >= 100) {
-                    alert("El margen comercial porcentual no puede ser igual o mayor al 100% cuando se calcula sobre el precio de venta.");
-                    document.getElementById('margen').value = 40;
-                    margen = 40;
-                }
-                if (margen <= 0) margen = 1;
+                // Usamos el valor numérico del select (40, 60, 25)
+                margen = numeroSeguro(selector, 40);
+                document.getElementById('margen').value = margen;
             }
 
             const costoManoObraTotal = horas * precioHora;
             const costoTotalLote = sumaIngredientes + sumaEmpaques + sumaIndirectos + costoManoObraTotal;
             const costoUnitarioTotal = costoTotalLote / unidades;
-            let precioVentaUnitario = 0;
 
-            if (selector === 'custom') {
-                precioVentaUnitario = costoUnitarioTotal * (1 + (margen / 100));
-            } else {
-                precioVentaUnitario = costoUnitarioTotal / (1 - (margen / 100));
-            }
-
+            // CORRECCIÓN: Cálculo de precio de venta basado en porcentaje de ganancia sobre el costo
+            // Fórmula segura: Costo Unitario + (Costo Unitario * Margen %)
+            const precioVentaUnitario = costoUnitarioTotal * (1 + (margen / 100));
             const gananciaNetaUnitaria = precioVentaUnitario - costoUnitarioTotal;
 
             globalCalculos = {
@@ -1212,7 +1207,6 @@
             document.getElementById('resGananciaNeta').innerText = formatMoney(gananciaNetaUnitaria);
             document.getElementById('seccionResultados').style.display = 'block';
         }
-
         async function guardarRecetaEnStorage() {
             const nombreReceta = document.getElementById('nombreReceta').value.trim();
             if (nombreReceta === '') { alert("Escribe el nombre del producto."); return; }
