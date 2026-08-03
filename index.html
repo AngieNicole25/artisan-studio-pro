@@ -12,7 +12,6 @@
     <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
     <link rel="manifest" href="site.webmanifest">
     <meta name="theme-color" content="#2A4736">
-    <meta name="theme-color" content="#2c4d3d">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Artisan Studio">
@@ -24,16 +23,16 @@
 
     <!-- SECCIÓN DE AUTENTICACIÓN -->
     <div id="seccion-auth">
-        <!-- SECCIÓN INICIO DE SESIÓN (SIN BOTÓN DE GOOGLE Y CON AUTOCOMPLETE) -->
+        <!-- SECCIÓN INICIO DE SESIÓN -->
         <div class="auth-box" id="box-login">
             <h3>Calculadora Pro: Iniciar Sesión</h3>
             <input type="email" id="loginCorreo" placeholder="Correo electrónico" autocomplete="email">
             <input type="password" id="loginClave" placeholder="Tu contraseña" autocomplete="current-password">
-            <button id="btn-login-trigger">Ingresar a la App</button>
+            <button id="btn-login-trigger" type="button">Ingresar a la App</button>
             <span class="toggle-link" id="link-ir-a-registro">¿No tienes cuenta? Regístrate aquí</span>
         </div>
 
-        <!-- SECCIÓN DE REGISTRO (MANTIENE EL BOTÓN DE GOOGLE) -->
+        <!-- SECCIÓN DE REGISTRO -->
         <div class="auth-box" id="box-registro" style="display: none;">
             <h3>✨ Crear Cuenta Nueva</h3>
             <input type="text" id="regNombre" placeholder="Nombre de tu Emprendimiento" autocomplete="name">
@@ -41,8 +40,8 @@
             <input type="password" id="regClave" placeholder="Crea una contraseña (mín. 6 caracteres)" autocomplete="new-password">
             <input type="text" id="regCodigoAcceso" placeholder="🔑 Código de acceso único">
 
-            <button id="btn-reg-trigger">Registrarme y Entrar</button>
-            <button id="btn-google-reg" style="background-color: #4285F4; margin-top: 10px;">🔵 Registrarse con Google</button>
+            <button id="btn-reg-trigger" type="button">Registrarme y Entrar</button>
+            <button id="btn-google-reg" type="button" style="background-color: #4285F4; margin-top: 10px; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">🔵 Registrarse con Google</button>
             <span class="toggle-link" id="link-ir-a-login">¿Ya tienes cuenta? Inicia sesión</span>
         </div>
     </div>
@@ -52,17 +51,16 @@
 
         <div class="header-top-bar">
             <div class="global-selectors">
-                <select id="selectorIdioma">
+                <select id="selectorIdioma" aria-label="Selector de idioma">
                     <option value="es">Español</option>
                     <option value="en">English</option>
                 </select>
-                <select id="selectorMoneda">
+                <select id="selectorMoneda" aria-label="Selector de moneda">
                     <option value="COP">Cargando monedas...</option>
                 </select>
             </div>
             <div>
-                <!-- BOTÓN MINIMALISTA: SOLO FOTO/AVATAR Y LAS 3 LÍNEAS -->
-                <button class="btn-profile-menu" id="btn-abrir-perfil" title="Menú de Perfil">
+                <button class="btn-profile-menu" id="btn-abrir-perfil" title="Menú de Perfil" type="button">
                     <img id="headerAvatarMini" src="" alt="Avatar" class="header-avatar-mini" style="display: none;">
                     <span id="headerAvatarFallback" class="header-avatar-fallback" style="display: inline-block;">🌿</span>
                     <span>☰</span>
@@ -80,7 +78,7 @@
             <div>
                 <h2>📝 Datos del Producto</h2>
             </div>
-            <button class="btn-history-trigger" id="btn-modal-trigger">
+            <button class="btn-history-trigger" id="btn-modal-trigger" type="button">
                 📂 Mis Productos Guardados (<span id="contadorRecetas">0</span>)
             </button>
         </div>
@@ -91,7 +89,7 @@
                 Artesanal:</label>
             <input type="text" id="nombreReceta" placeholder="Ej: Jabón de Avena y Miel...">
             
-            <label style="margin-top: 12px;">Categoría del Producto:</label>
+            <label for="categoriaProducto" style="margin-top: 12px; display: block;">Categoría del Producto:</label>
             <select id="categoriaProducto">
                 <option value="jabones">🧼 Jabones</option>
                 <option value="velas">🕯 Velas</option>
@@ -101,13 +99,12 @@
                 <option value="personalizado">🎁 Personalizado / Otro</option>
             </select>
 
-            <!-- CAMPOS DE PESO, CANTIDAD Y FECHA -->
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px;">
                 <div>
                     <label for="pesoArticulo">Peso / Contenido:</label>
                     <div style="display: flex; gap: 5px;">
                         <input type="number" id="pesoArticulo" placeholder="Ej: 100" step="0.1" style="flex: 2;">
-                        <select id="unidadPeso" style="flex: 1;">
+                        <select id="unidadPeso" style="flex: 1;" aria-label="Unidad de peso">
                             <option value="g">g</option>
                             <option value="kg">kg</option>
                             <option value="ml">ml</option>
@@ -131,16 +128,16 @@
         <div class="form-group">
             <div class="item-grid">
                 <div>
-                    <label>Ingrediente / Insumo</label>
+                    <label for="nombreIngrediente">Ingrediente / Insumo</label>
                     <input type="text" id="nombreIngrediente" list="sugerenciasIngredientes"
                         placeholder="Ej: Glicerina, Cera, Harina...">
                     <datalist id="sugerenciasIngredientes"></datalist>
                 </div>
-                <div><label id="lblCostoCompraIng">Costo Compra</label><input type="number" id="costoIngrediente"
+                <div><label id="lblCostoCompraIng" for="costoIngrediente">Costo Compra</label><input type="number" id="costoIngrediente"
                         placeholder="Total pack"></div>
-                <div><label>Cant. Comprada</label><input type="number" id="cantTotalIngrediente" placeholder="Ej: 1000">
+                <div><label for="cantTotalIngrediente">Cant. Comprada</label><input type="number" id="cantTotalIngrediente" placeholder="Ej: 1000">
                 </div>
-                <div><label>Cant. Usada</label><input type="number" id="cantUsadaIngrediente" placeholder="En receta">
+                <div><label for="cantUsadaIngrediente">Cant. Usada</label><input type="number" id="cantUsadaIngrediente" placeholder="En receta">
                 </div>
                 <button type="button" class="btn-add" id="btn-add-ingrediente">+ Añadir</button>
             </div>
@@ -167,15 +164,15 @@
         <div class="form-group">
             <div class="item-grid">
                 <div>
-                    <label>Material de Empaque</label>
+                    <label for="nombreEmpaque">Material de Empaque</label>
                     <input type="text" id="nombreEmpaque" list="sugerenciasEmpaques"
                         placeholder="Ej: Cajas, Etiquetas, Bolsas">
                     <datalist id="sugerenciasEmpaques"></datalist>
                 </div>
-                <div><label id="lblCostoCompraEmp">Costo Compra</label><input type="number" id="costoEmpaque"
+                <div><label id="lblCostoCompraEmp" for="costoEmpaque">Costo Compra</label><input type="number" id="costoEmpaque"
                         placeholder="Total pack"></div>
-                <div><label>Cant. Comprada</label><input type="number" id="cantTotalEmpaque" placeholder="Ej: 50"></div>
-                <div><label>Cant. Usada</label><input type="number" id="cantUsadaEmpaque" placeholder="Para lote"></div>
+                <div><label for="cantTotalEmpaque">Cant. Comprada</label><input type="number" id="cantTotalEmpaque" placeholder="Ej: 50"></div>
+                <div><label for="cantUsadaEmpaque">Cant. Usada</label><input type="number" id="cantUsadaEmpaque" placeholder="Para lote"></div>
                 <button type="button" class="btn-add" id="btn-add-empaque">+ Añadir</button>
             </div>
         </div>
@@ -201,11 +198,11 @@
         <div class="form-group">
             <div class="item-grid-indirectos">
                 <div>
-                    <label>Concepto (Ej: Electricidad, Gas, Moldes, Comisiones, Publicidad...)</label>
+                    <label for="nombreIndirecto">Concepto (Ej: Electricidad, Gas, Moldes, Comisiones, Publicidad...)</label>
                     <input type="text" id="nombreIndirecto" placeholder="Ej: Luz / Gas / Molde de Silicona">
                 </div>
                 <div>
-                    <label id="lblCostoIndirecto">Costo del Lote</label>
+                    <label id="lblCostoIndirecto" for="costoIndirecto">Costo del Lote</label>
                     <input type="number" id="costoIndirecto" placeholder="Ej: 2000">
                 </div>
                 <button type="button" class="btn-add" id="btn-add-indirecto">+ Añadir</button>
@@ -253,7 +250,7 @@
             </div>
         </div>
 
-        <button class="btn-calc" id="btn-calcular-todo">Calcular Precio y Ganancias 💡</button>
+        <button class="btn-calc" id="btn-calcular-todo" type="button">Calcular Precio y Ganancias 💡</button>
 
         <div class="results" id="seccionResultados" style="display: none;">
             <p>Gasto real en insumos (lote): <span id="resCostoIngredientes" class="highlight">-$</span></p>
@@ -272,7 +269,7 @@
                         unidad:</strong> <span id="resGananciaNeta" class="highlight"
                         style="color: #27ae60; font-size: 18px;">-$</span></p>
             </div>
-            <button class="btn-save" id="btn-guardar-receta">💾 Guardar o Actualizar este Producto</button>
+            <button class="btn-save" id="btn-guardar-receta" type="button">💾 Guardar o Actualizar este Producto</button>
         </div>
     </div>
 
@@ -281,7 +278,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>📂 Historial de Productos Guardados</h3>
-                <button class="btn-close-modal" id="btn-close-modal-x">&times;</button>
+                <button class="btn-close-modal" id="btn-close-modal-x" type="button">&times;</button>
             </div>
             <div class="table-container" style="margin-top: 0;">
                 <table>
@@ -305,7 +302,7 @@
         <div class="modal-content" style="max-width: 480px;">
             <div class="modal-header">
                 <h3>⚙️ Mi Perfil y Configuración</h3>
-                <button class="btn-close-modal" id="btn-close-perfil-x">&times;</button>
+                <button class="btn-close-modal" id="btn-close-perfil-x" type="button">&times;</button>
             </div>
             <div class="profile-container">
 
@@ -320,7 +317,7 @@
                 <!-- SELECTOR DE MODO OSCURO -->
                 <div class="theme-switch-container">
                     <span>🌙 Modo Oscuro</span>
-                    <label class="theme-switch">
+                    <label class="theme-switch" aria-label="Activar modo oscuro">
                         <input type="checkbox" id="checkboxModoOscuro">
                         <span class="slider"></span>
                     </label>
@@ -332,7 +329,7 @@
                     <p style="font-size: 12px; margin: 0 0 10px 0; opacity: 0.8;">Genera un nuevo código para un usuario
                         sin salir de tu sesión:</p>
                     <button type="button" id="btn-generar-codigo-admin"
-                        style="background-color: #27ae60; width: 100%; padding: 10px; font-size: 13px;">⚡ Generar y
+                        style="background-color: #27ae60; width: 100%; padding: 10px; font-size: 13px; color: white; border: none; border-radius: 4px; cursor: pointer;">⚡ Generar y
                         copiar código nuevo</button>
                     <div id="resultadoCodigoGenerado"
                         style="margin-top: 8px; font-weight: bold; color: #27ae60; font-size: 14px; text-align: center; display: none;">
@@ -346,7 +343,7 @@
                         <input type="text" id="perfilNombreInput" placeholder="Ej: Velas Luna">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
-                        <label for="perfilEmojiInput">Emoji representativo:</label>
+                        <label>Emoji representativo:</label>
                         <input type="hidden" id="perfilEmojiInput" value="🌿">
                         
                         <div class="emoji-picker-container" id="selectorEmojiPaleta">
@@ -366,10 +363,10 @@
                     <input type="password" id="perfilNuevaClave" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
                 </div>
 
-                <button class="btn-save" id="btn-actualizar-nombre-perfil" style="margin-top: 15px;">💾 Guardar
+                <button class="btn-save" id="btn-actualizar-nombre-perfil" style="margin-top: 15px;" type="button">💾 Guardar
                     Cambios</button>
 
-                <button id="btn-logout-trigger"
+                <button id="btn-logout-trigger" type="button"
                     style="background-color: #e74c3c; width: 100%; margin-top: 12px; padding: 11px; border-radius: 5px; color: white; border: none; font-weight: bold; cursor: pointer;">
                     🚪 Cerrar Sesión Activa
                 </button>
@@ -557,7 +554,7 @@
                     }
                 });
             } catch (error) {
-                console.warn("Modo Offline activo");
+                console.warn("Modo Offline activo o error en red restcountries");
             }
 
             const paisesOrdenados = Object.keys(paisesConfig).map(key => ({
@@ -697,12 +694,11 @@
                     if (tituloAdmin) tituloAdmin.style.display = 'none';
                 }
 
-                // 1. CARGA INMEDIATA DESDE LOCALSTORAGE (Evita el retraso visual)
+                // Carga inmediata desde LocalStorage
                 let nombreEmprendimiento = localStorage.getItem(`cache_nombre_${usuarioActivoUid}`) || (user.displayName ? user.displayName : "Mi Emprendimiento");
                 let emojiGuardado = localStorage.getItem(`cache_emoji_${usuarioActivoUid}`) || "🌿";
                 let fotoGuardada = localStorage.getItem(`cache_foto_${usuarioActivoUid}`) || user.photoURL || "";
 
-                // Pintar de inmediato en la UI
                 document.getElementById('textoNombreHeader').innerText = nombreEmprendimiento;
                 document.getElementById('emojiHeader').innerText = emojiGuardado;
                 document.getElementById('perfilHeaderNombreLabel').innerText = nombreEmprendimiento;
@@ -727,7 +723,7 @@
                     headerFallback.style.display = 'inline-block';
                 }
 
-                // 2. SINCRONIZACIÓN EN SEGUNDO PLANO CON FIRESTORE
+                // Sincronización en segundo plano con Firestore
                 try {
                     const docPerfilRef = doc(db, "perfiles_usuarios", usuarioActivoUid);
                     const docPerfilSnap = await getDoc(docPerfilRef);
@@ -885,7 +881,6 @@
             }
         }
 
-        // --- FUNCIÓN DE AUTENTICACIÓN CON GOOGLE ---
         async function ejecutarLoginGoogle() {
             try {
                 const resultado = await signInWithPopup(auth, googleProvider);
@@ -1128,6 +1123,7 @@
             const btnDel = document.createElement('button');
             btnDel.className = 'btn-delete';
             btnDel.innerText = 'X';
+            btnDel.type = 'button';
             btnDel.onclick = () => eliminarItem(item.id, tipo);
             fila.lastElementChild.appendChild(btnDel);
             return fila;
@@ -1140,6 +1136,7 @@
             const btnDel = document.createElement('button');
             btnDel.className = 'btn-delete';
             btnDel.innerText = 'X';
+            btnDel.type = 'button';
             btnDel.onclick = () => eliminarItem(item.id, 'indirecto');
             fila.lastElementChild.appendChild(btnDel);
             return fila;
@@ -1169,16 +1166,13 @@
             const selector = document.getElementById('tipoMargen').value;
             let margen = numeroSeguro(document.getElementById('margen').value);
 
-            // CORRECCIÓN 1: Validar límites lógicos del margen para evitar valores desorbitantes
             if (selector === 'custom') {
-                // Si es margen libre sobre el costo, limitamos un máximo razonable (ej. 500%)
                 if (margen <= 0) margen = 1;
                 if (margen > 500) margen = 500; 
             } else {
-                // Si usa los selectores predefinidos, el margen comercial (sobre PVP) debe estar estrictamente entre 1% y 95%
                 if (margen >= 100) {
                     alert("El margen comercial porcentual no puede ser igual o mayor al 100% cuando se calcula sobre el precio de venta.");
-                    document.getElementById('margen').value = 40; // Valor seguro por defecto
+                    document.getElementById('margen').value = 40;
                     margen = 40;
                 }
                 if (margen <= 0) margen = 1;
@@ -1189,13 +1183,9 @@
             const costoUnitarioTotal = costoTotalLote / unidades;
             let precioVentaUnitario = 0;
 
-            // CORRECCIÓN 2: Cálculo seguro según el tipo de margen
             if (selector === 'custom') {
-                // Margen aplicado como porcentaje de utilidad sobre el costo: Costo * (1 + Margen/100)
                 precioVentaUnitario = costoUnitarioTotal * (1 + (margen / 100));
             } else {
-                // Margen comercial sobre el precio de venta (PVP): Costo / (1 - Margen/100)
-                // Al validar que 'margen' sea menor a 100, evitamos la división por cero o números negativos
                 precioVentaUnitario = costoUnitarioTotal / (1 - (margen / 100));
             }
 
@@ -1227,7 +1217,6 @@
             const nombreReceta = document.getElementById('nombreReceta').value.trim();
             if (nombreReceta === '') { alert("Escribe el nombre del producto."); return; }
 
-            // Recolectar datos de peso, cantidad y fecha
             const pesoArticulo = numeroSeguro(document.getElementById('pesoArticulo').value);
             const unidadPeso = document.getElementById('unidadPeso').value;
             const cantidadVender = numeroSeguro(document.getElementById('cantidadVender').value, 1);
@@ -1309,11 +1298,13 @@
                     const btnLoad = document.createElement('button');
                     btnLoad.className = 'btn-load';
                     btnLoad.innerText = '📂 Cargar';
+                    btnLoad.type = 'button';
                     btnLoad.onclick = () => cargarRecetaEspecifica(receta);
 
                     const btnDel = document.createElement('button');
                     btnDel.className = 'btn-delete';
                     btnDel.innerText = 'Borrar';
+                    btnDel.type = 'button';
                     btnDel.onclick = () => eliminarRecetaStorage(docId, receta.nombre);
 
                     tr.lastElementChild.appendChild(btnLoad);
@@ -1341,7 +1332,6 @@
             document.getElementById('nombreReceta').value = receta.nombre;
             document.getElementById('categoriaProducto').value = receta.categoria || 'jabones';
             
-            // Cargar los campos de peso, cantidad y fecha correctamente
             document.getElementById('pesoArticulo').value = receta.peso || '';
             document.getElementById('unidadPeso').value = receta.unidadPeso || 'g';
             document.getElementById('cantidadVender').value = receta.cantidadVender || 1;
