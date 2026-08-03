@@ -29,6 +29,7 @@
             <input type="email" id="loginCorreo" placeholder="Correo electrónico">
             <input type="password" id="loginClave" placeholder="Tu contraseña">
             <button id="btn-login-trigger">Ingresar a la App</button>
+            <button id="btn-google-login" style="background-color: #4285F4; margin-top: 10px;">🔵 Continuar con Google</button>
             <span class="toggle-link" id="link-ir-a-registro">¿No tienes cuenta? Regístrate aquí</span>
         </div>
 
@@ -40,6 +41,7 @@
             <input type="text" id="regCodigoAcceso" placeholder="🔑 Código de acceso único">
 
             <button id="btn-reg-trigger">Registrarme y Entrar</button>
+            <button id="btn-google-reg" style="background-color: #4285F4; margin-top: 10px;">🔵 Registrarse con Google</button>
             <span class="toggle-link" id="link-ir-a-login">¿Ya tienes cuenta? Inicia sesión</span>
         </div>
     </div>
@@ -87,6 +89,7 @@
             <label for="nombreReceta" style="color: var(--primary-color); font-size: 16px;">Nombre del Producto
                 Artesanal:</label>
             <input type="text" id="nombreReceta" placeholder="Ej: Jabón de Avena y Miel...">
+            
             <label style="margin-top: 12px;">Categoría del Producto:</label>
             <select id="categoriaProducto">
                 <option value="jabones">🧼 Jabones</option>
@@ -96,6 +99,31 @@
                 <option value="panaderia">🍞 Panadería</option>
                 <option value="personalizado">🎁 Personalizado / Otro</option>
             </select>
+
+            <!-- NUEVOS CAMPOS SOLICITADOS -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px;">
+                <div>
+                    <label for="pesoArticulo">Peso / Contenido:</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="number" id="pesoArticulo" placeholder="Ej: 100" step="0.1" style="flex: 2;">
+                        <select id="unidadPeso" style="flex: 1;">
+                            <option value="g">g</option>
+                            <option value="kg">kg</option>
+                            <option value="ml">ml</option>
+                            <option value="l">L</option>
+                            <option value="ud">ud</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="cantidadVender">Cantidad a Vender:</label>
+                    <input type="number" id="cantidadVender" placeholder="Ej: 1" min="1" value="1">
+                </div>
+                <div>
+                    <label for="fechaFabricacion">Fecha de Fabricación:</label>
+                    <input type="date" id="fechaFabricacion">
+                </div>
+            </div>
         </div>
 
         <h3>1. Materia Prima (Insumos)</h3>
@@ -355,6 +383,8 @@
             getAuth,
             createUserWithEmailAndPassword,
             signInWithEmailAndPassword,
+            signInWithPopup,
+            GoogleAuthProvider,
             signOut,
             onAuthStateChanged,
             updateProfile,
@@ -388,6 +418,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const googleProvider = new GoogleAuthProvider();
 
         let usuarioActivoEmail = "";
         let usuarioActivoUid = "";
@@ -668,7 +699,7 @@
                 // 1. CARGA INMEDIATA DESDE LOCALSTORAGE (Evita el retraso visual)
                 let nombreEmprendimiento = localStorage.getItem(`cache_nombre_${usuarioActivoUid}`) || (user.displayName ? user.displayName : "Mi Emprendimiento");
                 let emojiGuardado = localStorage.getItem(`cache_emoji_${usuarioActivoUid}`) || "🌿";
-                let fotoGuardada = localStorage.getItem(`cache_foto_${usuarioActivoUid}`) || "";
+                let fotoGuardada = localStorage.getItem(`cache_foto_${usuarioActivoUid}`) || user.photoURL || "";
 
                 // Pintar de inmediato en la UI
                 document.getElementById('textoNombreHeader').innerText = nombreEmprendimiento;
@@ -825,7 +856,6 @@
                 await updateProfile(credencialUsuario.user, { displayName: nombre });
                 await updateDoc(docCodigoRef, { usado: true });
 
-                // Guardar en localStorage caché inicial
                 localStorage.setItem(`cache_nombre_${credencialUsuario.user.uid}`, nombre);
                 localStorage.setItem(`cache_emoji_${credencialUsuario.user.uid}`, "🌿");
                 localStorage.setItem(`cache_foto_${credencialUsuario.user.uid}`, "");
@@ -851,6 +881,34 @@
                 await signInWithEmailAndPassword(auth, email, clave);
             } catch (error) {
                 alert('Error al iniciar sesión: ' + error.message);
+            }
+        }
+
+        // --- FUNCIÓN DE AUTENTICACIÓN CON GOOGLE ---
+        async function ejecutarLoginGoogle() {
+            try {
+                const resultado = await signInWithPopup(auth, googleProvider);
+                const user = resultado.user;
+
+                const docPerfilRef = doc(db, "perfiles_usuarios", user.uid);
+                const docPerfilSnap = await getDoc(docPerfilRef);
+
+                if (!docPerfilSnap.exists()) {
+                    const nombreEmprendimiento = user.displayName || "Mi Emprendimiento";
+                    const fotoUrl = user.photoURL || "";
+
+                    localStorage.setItem(`cache_nombre_${user.uid}`, nombreEmprendimiento);
+                    localStorage.setItem(`cache_emoji_${user.uid}`, "🌿");
+                    localStorage.setItem(`cache_foto_${user.uid}`, fotoUrl);
+
+                    await setDoc(docPerfilRef, {
+                        nombreEmprendimiento: nombreEmprendimiento,
+                        emoji: "🌿",
+                        fotoUrl: fotoUrl
+                    });
+                }
+            } catch (error) {
+                alert("Error al autenticar con Google: " + error.message);
             }
         }
 
@@ -892,7 +950,6 @@
                         });
                     }
 
-                    // --- ACTUALIZACIÓN OPTIMISTA INSTANTÁNEA & CACHÉ LOCAL ---
                     document.getElementById('textoNombreHeader').innerText = nuevoNombre;
                     document.getElementById('emojiHeader').innerText = nuevoEmoji;
                     document.getElementById('perfilHeaderNombreLabel').innerText = nuevoNombre;
@@ -914,9 +971,8 @@
                         headerFallback.style.display = 'inline-block';
                     }
 
-                    cerrarModalPerfil(); // Cierra el modal de inmediato sin esperas visuales
+                    cerrarModalPerfil();
 
-                    // --- PROCESAMIENTO EN SEGUNDO PLANO ---
                     await updateProfile(auth.currentUser, { displayName: nuevoNombre });
 
                     if (nuevaClave.trim() !== "") {
@@ -942,6 +998,8 @@
 
         document.getElementById('btn-login-trigger').addEventListener('click', ejecutarLogin);
         document.getElementById('btn-reg-trigger').addEventListener('click', ejecutarRegistro);
+        document.getElementById('btn-google-login').addEventListener('click', ejecutarLoginGoogle);
+        document.getElementById('btn-google-reg').addEventListener('click', ejecutarLoginGoogle);
         document.getElementById('btn-actualizar-nombre-perfil').addEventListener('click', actualizarPerfilUsuario);
         document.getElementById('btn-logout-trigger').addEventListener('click', ejecutarLogout);
 
@@ -1150,10 +1208,20 @@
             const nombreReceta = document.getElementById('nombreReceta').value.trim();
             if (nombreReceta === '') { alert("Escribe el nombre del producto."); return; }
 
+            // Recolectar datos adicionales de peso, cantidad y fecha
+            const pesoArticulo = numeroSeguro(document.getElementById('pesoArticulo').value);
+            const unidadPeso = document.getElementById('unidadPeso').value;
+            const cantidadVender = numeroSeguro(document.getElementById('cantidadVender').value, 1);
+            const fechaFabricacion = document.getElementById('fechaFabricacion').value;
+
             const recetaMaestra = {
                 userId: usuarioActivoUid,
                 nombre: nombreReceta,
                 categoria: document.getElementById('categoriaProducto').value,
+                peso: pesoArticulo,
+                unidadPeso: unidadPeso,
+                cantidadVender: cantidadVender,
+                fechaFabricacion: fechaFabricacion,
                 ingredientes: [...INVENTARIO.ingredientes],
                 empaques: [...INVENTARIO.empaques],
                 indirectos: [...INVENTARIO.indirectos],
@@ -1253,6 +1321,13 @@
         function cargarRecetaEspecifica(receta) {
             document.getElementById('nombreReceta').value = receta.nombre;
             document.getElementById('categoriaProducto').value = receta.categoria || 'jabones';
+            
+            // Cargar nuevos campos de peso, cantidad y fecha
+            document.getElementById('pesoArticulo').value = receta.peso || '';
+            document.getElementById('unidadPeso').value = receta.unidadPeso || 'g';
+            document.getElementById('cantidadVender').value = receta.cantidadVender || 1;
+            document.getElementById('fechaFabricacion').value = receta.fechaFabricacion || '';
+
             actualizarSugerenciasPorCategoria();
 
             INVENTARIO.ingredientes = receta.ingredientes || [];
