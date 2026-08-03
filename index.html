@@ -1169,16 +1169,35 @@
             const selector = document.getElementById('tipoMargen').value;
             let margen = numeroSeguro(document.getElementById('margen').value);
 
-            if (margen >= 100) margen = 99.99;
-            if (margen <= 0) { alert("El margen debe ser mayor que cero."); return; }
+            // CORRECCIÓN 1: Validar límites lógicos del margen para evitar valores desorbitantes
+            if (selector === 'custom') {
+                // Si es margen libre sobre el costo, limitamos un máximo razonable (ej. 500%)
+                if (margen <= 0) margen = 1;
+                if (margen > 500) margen = 500; 
+            } else {
+                // Si usa los selectores predefinidos, el margen comercial (sobre PVP) debe estar estrictamente entre 1% y 95%
+                if (margen >= 100) {
+                    alert("El margen comercial porcentual no puede ser igual o mayor al 100% cuando se calcula sobre el precio de venta.");
+                    document.getElementById('margen').value = 40; // Valor seguro por defecto
+                    margen = 40;
+                }
+                if (margen <= 0) margen = 1;
+            }
 
             const costoManoObraTotal = horas * precioHora;
             const costoTotalLote = sumaIngredientes + sumaEmpaques + sumaIndirectos + costoManoObraTotal;
             const costoUnitarioTotal = costoTotalLote / unidades;
             let precioVentaUnitario = 0;
 
-            if (selector === 'custom') precioVentaUnitario = costoUnitarioTotal * (1 + (margen / 100));
-            else precioVentaUnitario = costoUnitarioTotal / (1 - (margen / 100));
+            // CORRECCIÓN 2: Cálculo seguro según el tipo de margen
+            if (selector === 'custom') {
+                // Margen aplicado como porcentaje de utilidad sobre el costo: Costo * (1 + Margen/100)
+                precioVentaUnitario = costoUnitarioTotal * (1 + (margen / 100));
+            } else {
+                // Margen comercial sobre el precio de venta (PVP): Costo / (1 - Margen/100)
+                // Al validar que 'margen' sea menor a 100, evitamos la división por cero o números negativos
+                precioVentaUnitario = costoUnitarioTotal / (1 - (margen / 100));
+            }
 
             const gananciaNetaUnitaria = precioVentaUnitario - costoUnitarioTotal;
 
