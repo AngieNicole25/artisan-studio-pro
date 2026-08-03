@@ -24,20 +24,21 @@
 
     <!-- SECCIÓN DE AUTENTICACIÓN -->
     <div id="seccion-auth">
+        <!-- SECCIÓN INICIO DE SESIÓN (SIN BOTÓN DE GOOGLE Y CON AUTOCOMPLETE) -->
         <div class="auth-box" id="box-login">
             <h3>Calculadora Pro: Iniciar Sesión</h3>
-            <input type="email" id="loginCorreo" placeholder="Correo electrónico">
-            <input type="password" id="loginClave" placeholder="Tu contraseña">
+            <input type="email" id="loginCorreo" placeholder="Correo electrónico" autocomplete="email">
+            <input type="password" id="loginClave" placeholder="Tu contraseña" autocomplete="current-password">
             <button id="btn-login-trigger">Ingresar a la App</button>
-            <button id="btn-google-login" style="background-color: #4285F4; margin-top: 10px;">🔵 Continuar con Google</button>
             <span class="toggle-link" id="link-ir-a-registro">¿No tienes cuenta? Regístrate aquí</span>
         </div>
 
+        <!-- SECCIÓN DE REGISTRO (MANTIENE EL BOTÓN DE GOOGLE) -->
         <div class="auth-box" id="box-registro" style="display: none;">
             <h3>✨ Crear Cuenta Nueva</h3>
-            <input type="text" id="regNombre" placeholder="Nombre de tu Emprendimiento">
-            <input type="email" id="regCorreo" placeholder="Tu correo electrónico">
-            <input type="password" id="regClave" placeholder="Crea una contraseña (mín. 6 caracteres)">
+            <input type="text" id="regNombre" placeholder="Nombre de tu Emprendimiento" autocomplete="name">
+            <input type="email" id="regCorreo" placeholder="Tu correo electrónico" autocomplete="email">
+            <input type="password" id="regClave" placeholder="Crea una contraseña (mín. 6 caracteres)" autocomplete="new-password">
             <input type="text" id="regCodigoAcceso" placeholder="🔑 Código de acceso único">
 
             <button id="btn-reg-trigger">Registrarme y Entrar</button>
@@ -47,7 +48,7 @@
     </div>
 
     <!-- CONTENEDOR PRINCIPAL (CALCULADORA) -->
-    <div class="container" id="contenidoApp">
+    <div class="container" id="contenidoApp" style="display: none;">
 
         <div class="header-top-bar">
             <div class="global-selectors">
@@ -362,7 +363,7 @@
                 <div class="profile-section-title">Seguridad y Cuenta</div>
                 <div class="form-group">
                     <label for="perfilNuevaClave">Nueva Contraseña (Opcional):</label>
-                    <input type="password" id="perfilNuevaClave" placeholder="Mínimo 6 caracteres">
+                    <input type="password" id="perfilNuevaClave" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
                 </div>
 
                 <button class="btn-save" id="btn-actualizar-nombre-perfil" style="margin-top: 15px;">💾 Guardar
@@ -998,7 +999,6 @@
 
         document.getElementById('btn-login-trigger').addEventListener('click', ejecutarLogin);
         document.getElementById('btn-reg-trigger').addEventListener('click', ejecutarRegistro);
-        document.getElementById('btn-google-login').addEventListener('click', ejecutarLoginGoogle);
         document.getElementById('btn-google-reg').addEventListener('click', ejecutarLoginGoogle);
         document.getElementById('btn-actualizar-nombre-perfil').addEventListener('click', actualizarPerfilUsuario);
         document.getElementById('btn-logout-trigger').addEventListener('click', ejecutarLogout);
