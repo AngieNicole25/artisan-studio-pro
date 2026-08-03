@@ -584,10 +584,20 @@
             calcularManoObraEnTiempoReal();
         }
 
-        function formatMoney(amount) {
+       function formatMoney(amount) {
             if (amount === null || amount === undefined || isNaN(amount)) amount = 0;
+            
+            // Redondeamos el monto para eliminar decimales o centavos por completo
+            const valorRedondeado = Math.round(amount);
+            
             const config = paisesConfig[monedaActual] || { locale: "es-CO", moneda: monedaActual };
-            return new Intl.NumberFormat(config.locale, { style: 'currency', currency: monedaActual }).format(amount);
+            
+            return new Intl.NumberFormat(config.locale, { 
+                style: 'currency', 
+                currency: monedaActual,
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(valorRedondeado);
         }
 
         function actualizarSugerenciasPorCategoria() {
