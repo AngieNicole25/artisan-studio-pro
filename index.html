@@ -100,7 +100,7 @@
                 <option value="personalizado">🎁 Personalizado / Otro</option>
             </select>
 
-            <!-- NUEVOS CAMPOS SOLICITADOS -->
+            <!-- CAMPOS DE PESO, CANTIDAD Y FECHA -->
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px;">
                 <div>
                     <label for="pesoArticulo">Peso / Contenido:</label>
@@ -1208,7 +1208,7 @@
             const nombreReceta = document.getElementById('nombreReceta').value.trim();
             if (nombreReceta === '') { alert("Escribe el nombre del producto."); return; }
 
-            // Recolectar datos adicionales de peso, cantidad y fecha
+            // Recolectar datos de peso, cantidad y fecha
             const pesoArticulo = numeroSeguro(document.getElementById('pesoArticulo').value);
             const unidadPeso = document.getElementById('unidadPeso').value;
             const cantidadVender = numeroSeguro(document.getElementById('cantidadVender').value, 1);
@@ -1244,7 +1244,7 @@
                     await addDoc(collection(db, "productos_guardados"), recetaMaestra);
                 }
 
-                alert(`¡Producto "${nombreReceta}" guardado y sincronizado en la nube con éxito!`);
+                alert(`✨ ¡Producto "${nombreReceta}" guardado y sincronizado en la nube con éxito!`);
                 await actualizarContadorRecetas();
             } catch (error) {
                 console.error("Error al guardar receta en Firestore: ", error);
@@ -1322,7 +1322,7 @@
             document.getElementById('nombreReceta').value = receta.nombre;
             document.getElementById('categoriaProducto').value = receta.categoria || 'jabones';
             
-            // Cargar nuevos campos de peso, cantidad y fecha
+            // Cargar los campos de peso, cantidad y fecha correctamente
             document.getElementById('pesoArticulo').value = receta.peso || '';
             document.getElementById('unidadPeso').value = receta.unidadPeso || 'g';
             document.getElementById('cantidadVender').value = receta.cantidadVender || 1;
