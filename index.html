@@ -1185,14 +1185,13 @@
             const precioHora = Math.max(0, parseFloat(document.getElementById('precioHora').value) || 0);
             const selector = document.getElementById('tipoMargen').value;
             
-            // Obtener el valor del margen de forma segura
-            let margen = numeroSeguro(document.getElementById('margen').value);
+            let margen = 40; // Valor por defecto seguro
 
             if (selector === 'custom') {
+                margen = numeroSeguro(document.getElementById('margen').value, 40);
                 if (margen <= 0) margen = 1;
-                if (margen > 500) margen = 500; // Límite razonable
+                if (margen > 1000) margen = 1000; // Tope máximo seguro para evitar errores
             } else {
-                // Usamos el valor numérico del select (40, 60, 25)
                 margen = numeroSeguro(selector, 40);
                 document.getElementById('margen').value = margen;
             }
@@ -1201,10 +1200,9 @@
             const costoTotalLote = sumaIngredientes + sumaEmpaques + sumaIndirectos + costoManoObraTotal;
             const costoUnitarioTotal = costoTotalLote / unidades;
 
-            // CORRECCIÓN: Cálculo de precio de venta basado en porcentaje de ganancia sobre el costo
-            // Fórmula segura: Costo Unitario + (Costo Unitario * Margen %)
-            const precioVentaUnitario = costoUnitarioTotal * (1 + (margen / 100));
-            const gananciaNetaUnitaria = precioVentaUnitario - costoUnitarioTotal;
+            // CÁLCULO SEGURO DEL PRECIO DE VENTA (Costo Unitario + el porcentaje de ganancia)
+            const gananciaNetaUnitaria = costoUnitarioTotal * (margen / 100);
+            const precioVentaUnitario = costoUnitarioTotal + gananciaNetaUnitaria;
 
             globalCalculos = {
                 costoLote: costoTotalLote,
