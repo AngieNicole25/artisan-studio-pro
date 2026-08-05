@@ -1193,6 +1193,12 @@
 
             // CORRECCIÓN: Cálculo de precio de venta basado en porcentaje de ganancia sobre el costo
             // Fórmula segura: Costo Unitario + (Costo Unitario * Margen %)
+            console.log("Costo lote:", costoTotalLote);
+console.log("Costo unidad:", costoUnitarioTotal);
+console.log("Margen:", margen);
+console.log("Precio venta:", precioVentaUnitario);
+console.log("Ganancia:", gananciaNetaUnitaria);
+
             const precioVentaUnitario = costoUnitarioTotal * (1 + (margen / 100));
             const gananciaNetaUnitaria = precioVentaUnitario - costoUnitarioTotal;
 
