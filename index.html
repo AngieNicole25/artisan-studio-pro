@@ -1193,7 +1193,7 @@
 
             // CORRECCIÓN: Cálculo de precio de venta basado en porcentaje de ganancia sobre el costo
             // Fórmula segura: Costo Unitario + (Costo Unitario * Margen %)
-            const precioVentaUnitario = 3024;
+            const precioVentaUnitario = costoUnitarioTotal * (1 + (margen / 100));
             const gananciaNetaUnitaria = precioVentaUnitario - costoUnitarioTotal;
 
             globalCalculos = {
