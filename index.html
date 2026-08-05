@@ -584,7 +584,7 @@
             calcularManoObraEnTiempoReal();
         }
 
-       function formatMoney(amount) {
+        function formatMoney(amount) {
             if (amount === null || amount === undefined || isNaN(amount)) amount = 0;
             
             // Redondeamos el monto para eliminar decimales o centavos por completo
@@ -655,22 +655,32 @@
             if (antiguaMoneda === nuevaMoneda) return;
             localStorage.setItem('cotizador_moneda', nuevaMoneda);
 
-            const factor = (paisesConfig[nuevaMoneda]?.tasa || 1) / (paisesConfig[antiguaMoneda]?.tasa || 1);
+            // Obtenemos las tasas de forma segura para evitar multiplicaciones infinitas
+            const tasaAntigua = paisesConfig[antiguaMoneda]?.tasa || 1;
+            const tasaNueva = paisesConfig[nuevaMoneda]?.tasa || 1;
+            
+            // Factor de conversión correcto basado en la moneda base
+            const factor = tasaNueva / tasaAntigua;
 
             INVENTARIO.ingredientes = INVENTARIO.ingredientes.map(item => ({
-                ...item, costo: item.costo * factor, costoRealUsado: item.costoRealUsado * factor
+                ...item, 
+                costo: item.costo * factor, 
+                costoRealUsado: item.costoRealUsado * factor
             }));
 
             INVENTARIO.empaques = INVENTARIO.empaques.map(item => ({
-                ...item, costo: item.costo * factor, costoRealUsado: item.costoRealUsado * factor
+                ...item, 
+                costo: item.costo * factor, 
+                costoRealUsado: item.costoRealUsado * factor
             }));
 
             INVENTARIO.indirectos = INVENTARIO.indirectos.map(item => ({
-                ...item, costo: item.costo * factor
+                ...item, 
+                costo: item.costo * factor
             }));
 
             const inputPrecioHora = document.getElementById('precioHora');
-            inputPrecioHora.value = (parseFloat(inputPrecioHora.value) * factor).toFixed(2);
+            inputPrecioHora.value = Math.round(parseFloat(inputPrecioHora.value) * factor);
 
             monedaActual = nuevaMoneda;
             actualizarEtiquetasMoneda();
