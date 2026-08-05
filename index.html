@@ -1175,8 +1175,15 @@
         function toggleMargenPersonalizado() {
             const selector = document.getElementById('tipoMargen').value;
             const contenedorCustom = document.getElementById('contenedorMargenCustom');
-            if (selector === 'custom') contenedorCustom.style.display = 'block';
-            else { contenedorCustom.style.display = 'none'; document.getElementById('margen').value = selector; }
+            const inputMargen = document.getElementById('margen');
+            
+            if (selector === 'custom') {
+                contenedorCustom.style.display = 'block';
+            } else {
+                contenedorCustom.style.display = 'none';
+                // Forzamos a que el input de margen tome exactamente el valor numérico del select
+                inputMargen.value = selector; 
+            }
         }
 
         function calcularCotizacion() {
@@ -1185,13 +1192,14 @@
             const precioHora = Math.max(0, parseFloat(document.getElementById('precioHora').value) || 0);
             const selector = document.getElementById('tipoMargen').value;
             
-            let margen = 40; // Valor por defecto seguro
+            let margen = 40; // Valor seguro por defecto
 
             if (selector === 'custom') {
                 margen = numeroSeguro(document.getElementById('margen').value, 40);
                 if (margen <= 0) margen = 1;
-                if (margen > 1000) margen = 1000; // Tope máximo seguro para evitar errores
+                if (margen > 1000) margen = 1000; // Tope máximo para evitar desbordamientos
             } else {
+                // Forzamos estrictamente el valor del select para ignorar cualquier caché vieja
                 margen = numeroSeguro(selector, 40);
                 document.getElementById('margen').value = margen;
             }
@@ -1200,7 +1208,7 @@
             const costoTotalLote = sumaIngredientes + sumaEmpaques + sumaIndirectos + costoManoObraTotal;
             const costoUnitarioTotal = costoTotalLote / unidades;
 
-            // CÁLCULO SEGURO DEL PRECIO DE VENTA (Costo Unitario + el porcentaje de ganancia)
+            // Cálculo limpio y seguro del precio de venta
             const gananciaNetaUnitaria = costoUnitarioTotal * (margen / 100);
             const precioVentaUnitario = costoUnitarioTotal + gananciaNetaUnitaria;
 
