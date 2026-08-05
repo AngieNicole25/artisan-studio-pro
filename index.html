@@ -1192,23 +1192,29 @@
             const precioHora = Math.max(0, parseFloat(document.getElementById('precioHora').value) || 0);
             const selector = document.getElementById('tipoMargen').value;
             
-            let margen = 40; // Valor seguro por defecto
-
+            // BLINDAJE TOTAL: Asignamos el margen correcto según lo que el usuario elija en el selector
+            let margen = 40; 
+            
             if (selector === 'custom') {
                 margen = numeroSeguro(document.getElementById('margen').value, 40);
                 if (margen <= 0) margen = 1;
-                if (margen > 1000) margen = 1000; // Tope máximo para evitar desbordamientos
+                if (margen > 500) margen = 500; // Límite seguro
             } else {
-                // Forzamos estrictamente el valor del select para ignorar cualquier caché vieja
-                margen = numeroSeguro(selector, 40);
-                document.getElementById('margen').value = margen;
+                // Forzamos explícitamente los porcentajes correctos según la opción elegida
+                margen = Number(selector); 
+                if (isNaN(margen) || margen <= 0) {
+                    margen = 40; // Si hay algún fallo, por defecto toma 40
+                }
             }
+
+            // Actualizamos el input de margen visualmente para que coincida
+            document.getElementById('margen').value = margen;
 
             const costoManoObraTotal = horas * precioHora;
             const costoTotalLote = sumaIngredientes + sumaEmpaques + sumaIndirectos + costoManoObraTotal;
             const costoUnitarioTotal = costoTotalLote / unidades;
 
-            // Cálculo limpio y seguro del precio de venta
+            // Cálculo limpio: Costo Unitario + (Costo Unitario * Margen / 100)
             const gananciaNetaUnitaria = costoUnitarioTotal * (margen / 100);
             const precioVentaUnitario = costoUnitarioTotal + gananciaNetaUnitaria;
 
@@ -1219,7 +1225,7 @@
                 gananciaNeta: gananciaNetaUnitaria,
                 unidades, horas, precioHora,
                 tipoMargen: selector,
-                margenManual: document.getElementById('margen').value,
+                margenManual: margen,
                 monedaAlGuardar: monedaActual
             };
 
