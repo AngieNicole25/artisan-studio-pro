@@ -2688,9 +2688,27 @@ function normalizarItemIndirecto(
         document.getElementById('btn-calcular-todo').addEventListener('click', calcularCotizacion);
         document.getElementById('btn-guardar-receta').addEventListener('click', guardarRecetaEnStorage);
 
-        calcularManoObraEnTiempoReal();
+calcularManoObraEnTiempoReal();
 
-       if ('serviceWorker' in navigator) {
+console.log("=== DIAGNÓSTICO ARTISAN STUDIO ===");
+console.log(
+    "convertirABase dentro del módulo:",
+    typeof convertirABase
+);
+console.log(
+    "formatearInputMoneda dentro del módulo:",
+    typeof formatearInputMoneda
+);
+console.log(
+    "calcularCotizacion dentro del módulo:",
+    typeof calcularCotizacion
+);
+console.log(
+    "agregarItem dentro del módulo:",
+    typeof agregarItem
+);
+
+if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
             .then((reg) => {
@@ -2707,7 +2725,8 @@ function normalizarItemIndirecto(
             });
     });
 }
-    </script>
+
+</script>
 </body>
 
 </html>
