@@ -23,14 +23,31 @@
 
     <!-- SECCIÓN DE AUTENTICACIÓN -->
     <div id="seccion-auth">
-        <!-- SECCIÓN INICIO DE SESIÓN -->
-        <div class="auth-box" id="box-login">
-            <h3>Calculadora Pro: Iniciar Sesión</h3>
-            <input type="email" id="loginCorreo" placeholder="Correo electrónico" autocomplete="email">
-            <input type="password" id="loginClave" placeholder="Tu contraseña" autocomplete="current-password">
-            <button id="btn-login-trigger" type="button">Ingresar a la App</button>
-            <span class="toggle-link" id="link-ir-a-registro">¿No tienes cuenta? Regístrate aquí</span>
-        </div>
+       <!-- SECCIÓN INICIO DE SESIÓN -->
+<div class="auth-box" id="box-login">
+    <h3>Calculadora Pro: Iniciar Sesión</h3>
+
+    <input type="email" id="loginCorreo"
+        placeholder="Correo electrónico"
+        autocomplete="email">
+
+    <input type="password" id="loginClave"
+        placeholder="Tu contraseña"
+        autocomplete="current-password">
+
+    <button id="btn-login-trigger" type="button">
+        Ingresar a la App
+    </button>
+
+    <button id="btn-google-login" type="button"
+        style="background-color: #4285F4; margin-top: 10px; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">
+        🔵 Ingresar con Google
+    </button>
+
+    <span class="toggle-link" id="link-ir-a-registro">
+        ¿No tienes cuenta? Regístrate aquí
+    </span>
+</div>
 
         <!-- SECCIÓN DE REGISTRO -->
         <div class="auth-box" id="box-registro" style="display: none;">
@@ -246,7 +263,7 @@
             </div>
             <div id="contenedorMargenCustom" style="display: none;">
                 <label for="margen">Escribe tu ganancia deseada (%):</label>
-                <input type="number" id="margen" value="100" min="1" max="5000">
+                <input type="number" id="margen" value="40" min="1" max="95">
             </div>
         </div>
 
@@ -442,19 +459,84 @@
             });
         }
 
-        let paisesConfig = {
-            COP: { nombre: "Colombia", moneda: "COP", locale: "es-CO", tasa: 1 },
-            USD: { nombre: "Estados Unidos", moneda: "USD", locale: "en-US", tasa: 0.00025 },
-            MXN: { nombre: "México", moneda: "MXN", locale: "es-MX", tasa: 0.0049 },
-            ARS: { nombre: "Argentina", moneda: "ARS", locale: "es-AR", tasa: 0.23 },
-            CLP: { nombre: "Chile", moneda: "CLP", locale: "es-CL", tasa: 0.24 },
-            PEN: { nombre: "Perú", moneda: "PEN", locale: "es-PE", tasa: 0.00093 },
-            EUR: { nombre: "España / Eurozona", moneda: "EUR", locale: "es-ES", tasa: 0.00023 },
-            ILS: { nombre: "Israel", moneda: "ILS", locale: "he-IL", tasa: 0.00092 }
-        };
+       // ============================================================
+// CONFIGURACIÓN DE MONEDAS
+// ============================================================
+// IMPORTANTE:
+// Todos los costos se almacenan internamente en COP.
+// La moneda seleccionada SOLO cambia la visualización.
+// Esto evita conversiones repetidas y errores como millones,
+// Infinity, NaN o pérdida de precisión.
+// ============================================================
 
-        let monedaActual = 'COP';
-        let idiomaActual = 'es';
+let paisesConfig = {
+    COP: {
+        nombre: "Colombia",
+        moneda: "COP",
+        locale: "es-CO",
+        tasa: 1
+    },
+
+    USD: {
+        nombre: "Estados Unidos",
+        moneda: "USD",
+        locale: "en-US",
+        tasa: 0.00025
+    },
+
+    EUR: {
+        nombre: "España / Eurozona",
+        moneda: "EUR",
+        locale: "es-ES",
+        tasa: 0.00023
+    },
+
+    MXN: {
+        nombre: "México",
+        moneda: "MXN",
+        locale: "es-MX",
+        tasa: 0.0049
+    },
+
+    ARS: {
+        nombre: "Argentina",
+        moneda: "ARS",
+        locale: "es-AR",
+        tasa: 0.23
+    },
+
+    CLP: {
+        nombre: "Chile",
+        moneda: "CLP",
+        locale: "es-CL",
+        tasa: 0.24
+    },
+
+    PEN: {
+        nombre: "Perú",
+        moneda: "PEN",
+        locale: "es-PE",
+        tasa: 0.00093
+    },
+
+    // 🇮🇱 Israel — se mantiene siempre disponible
+    ILS: {
+        nombre: "Israel",
+        moneda: "ILS",
+        locale: "he-IL",
+        tasa: 0.00092
+    }
+};
+
+// Moneda seleccionada actualmente.
+// La moneda BASE de los cálculos siempre será COP.
+let monedaActual = 'COP';
+
+// Idioma actual de la aplicación.
+let idiomaActual = 'es';
+
+// Precio de la hora de trabajo almacenado en moneda base (COP).
+let precioHoraBase = 5000;
 
         const ejemplosNombrePorCategoria = {
             jabones: "Ej: Jabón de Avena y Miel...",
@@ -515,74 +597,54 @@
             });
         }
 
-        async function inicializarSelectorPaises() {
-            const selector = document.getElementById('selectorMoneda');
-            selector.innerHTML = '<option value="">Cargando monedas...</option>';
+        function inicializarSelectorPaises() {
 
-            try {
-                const respuesta = await fetch('https://restcountries.com/v3.1/all?fields=name,currencies,cca2,translations');
-                if (!respuesta.ok) throw new Error("Fallo en la API");
-                const paises = await respuesta.json();
+    const selector = document.getElementById('selectorMoneda');
 
-                paisesConfig = { COP: { nombre: "Colombia", moneda: "COP", locale: "es-CO", tasa: 1 } };
+    if (!selector) {
+        console.warn('No se encontró #selectorMoneda');
+        return;
+    }
 
-                paises.forEach(pais => {
-                    if (pais.currencies && Object.keys(pais.currencies).length > 0) {
-                        const codMoneda = Object.keys(pais.currencies)[0];
-                        const infoMoneda = pais.currencies[codMoneda];
-                        const nombreEspañol = pais.translations?.spa?.common || pais.name.common;
-                        const codigoPais = pais.cca2.toLowerCase();
-                        const localeAproximado = `${idiomaActual}-${codigoPais.toUpperCase()}`;
+    const monedaGuardada = localStorage.getItem('cotizador_moneda');
 
-                        let tasaSimulada = 1;
-                        if (codMoneda === 'COP') tasaSimulada = 1;
-                        else if (codMoneda === 'USD') tasaSimulada = 0.00025;
-                        else if (codMoneda === 'EUR') tasaSimulada = 0.00023;
-                        else if (codMoneda === 'MXN') tasaSimulada = 0.0049;
-                        else if (codMoneda === 'ARS') tasaSimulada = 0.23;
-                        else if (codMoneda === 'CLP') tasaSimulada = 0.24;
-                        else if (codMoneda === 'PEN') tasaSimulada = 0.00093;
-                        else if (codMoneda === 'ILS') tasaSimulada = 0.00092;
-                        else tasaSimulada = 0.005;
+    if (
+        monedaGuardada &&
+        Object.prototype.hasOwnProperty.call(paisesConfig, monedaGuardada)
+    ) {
+        monedaActual = monedaGuardada;
+    } else {
+        monedaActual = 'COP';
+    }
 
-                        paisesConfig[codMoneda] = {
-                            nombre: nombreEspañol,
-                            moneda: `${codMoneda} (${infoMoneda.symbol || '$'})`,
-                            locale: localeAproximado,
-                            tasa: tasaSimulada
-                        };
-                    }
-                });
-            } catch (error) {
-                console.warn("Modo Offline activo o error en red restcountries");
+    selector.innerHTML = '';
+
+    Object.entries(paisesConfig)
+        .sort(([, a], [, b]) =>
+            a.nombre.localeCompare(b.nombre, 'es')
+        )
+        .forEach(([codigo, config]) => {
+
+            const option = document.createElement('option');
+
+            option.value = codigo;
+            option.textContent = `${config.nombre} (${codigo})`;
+
+            if (codigo === monedaActual) {
+                option.selected = true;
             }
 
-            const paisesOrdenados = Object.keys(paisesConfig).map(key => ({
-                codigo: key,
-                ...paisesConfig[key]
-            })).sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+            selector.appendChild(option);
+        });
 
-            selector.innerHTML = '';
-            paisesOrdenados.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.codigo;
-                opt.innerText = `${p.nombre} (${p.codigo})`;
-                selector.appendChild(opt);
-            });
+    const inputPrecioHora = document.getElementById('precioHora');
 
-            const monedaGuardada = localStorage.getItem('cotizador_moneda') || 'COP';
-            if (paisesConfig[monedaGuardada]) {
-                monedaActual = monedaGuardada;
-                selector.value = monedaGuardada;
-            } else {
-                monedaActual = 'COP';
-                selector.value = 'COP';
-            }
+    if (inputPrecioHora) {
+        inputPrecioHora.value = formatearInputMoneda(precioHoraBase);
+    }
 
-            actualizarEtiquetasMoneda();
-            actualizarTablas();
-            calcularManoObraEnTiempoReal();
-        }
+    actualizarEtiquetasMoneda();
+}
 
         function formatMoney(amount) {
             if (amount === null || amount === undefined || isNaN(amount)) amount = 0;
@@ -650,47 +712,63 @@
             document.getElementById('lblPriceHour').innerText = `Valor hora de trabajo (${monedaActual}):`;
         }
 
-        function manejarCambioMoneda(nuevaMoneda) {
-            const antiguaMoneda = monedaActual;
-            if (antiguaMoneda === nuevaMoneda) return;
-            localStorage.setItem('cotizador_moneda', nuevaMoneda);
+        // ============================================================
+// CAMBIO DE MONEDA
+// ============================================================
+// IMPORTANTE:
+// Cambiar de moneda NO modifica los costos internos.
+// Los costos permanecen almacenados en COP.
+// Solo cambia la moneda utilizada para mostrar los valores.
+// ============================================================
 
-            // Obtenemos las tasas de forma segura para evitar multiplicaciones infinitas
-            const tasaAntigua = paisesConfig[antiguaMoneda]?.tasa || 1;
-            const tasaNueva = paisesConfig[nuevaMoneda]?.tasa || 1;
-            
-            // Factor de conversión correcto basado en la moneda base
-            const factor = tasaNueva / tasaAntigua;
+function manejarCambioMoneda(nuevaMoneda) {
 
-            INVENTARIO.ingredientes = INVENTARIO.ingredientes.map(item => ({
-                ...item, 
-                costo: item.costo * factor, 
-                costoRealUsado: item.costoRealUsado * factor
-            }));
+    // Verificar que la moneda exista
+    if (!paisesConfig[nuevaMoneda]) {
+        console.warn(`Moneda no configurada: ${nuevaMoneda}`);
+        return;
+    }
 
-            INVENTARIO.empaques = INVENTARIO.empaques.map(item => ({
-                ...item, 
-                costo: item.costo * factor, 
-                costoRealUsado: item.costoRealUsado * factor
-            }));
+    // No hacer nada si ya estamos en esa moneda
+    if (monedaActual === nuevaMoneda) {
+        return;
+    }
 
-            INVENTARIO.indirectos = INVENTARIO.indirectos.map(item => ({
-                ...item, 
-                costo: item.costo * factor
-            }));
+    // Cambiar únicamente la moneda actual
+    monedaActual = nuevaMoneda;
 
-            const inputPrecioHora = document.getElementById('precioHora');
-            inputPrecioHora.value = Math.round(parseFloat(inputPrecioHora.value) * factor);
+    // Guardar preferencia
+    localStorage.setItem(
+        'cotizador_moneda',
+        nuevaMoneda
+    );
 
-            monedaActual = nuevaMoneda;
-            actualizarEtiquetasMoneda();
-            actualizarTablas();
-            calcularManoObraEnTiempoReal();
-            if (document.getElementById('seccionResultados').style.display === 'block') {
-                calcularCotizacion();
-            }
-        }
+    // Mostrar el precio/hora convertido
+    const inputPrecioHora =
+        document.getElementById('precioHora');
 
+    if (inputPrecioHora) {
+        inputPrecioHora.value =
+            formatearInputMoneda(precioHoraBase);
+    }
+
+    // Actualizar interfaz
+    actualizarEtiquetasMoneda();
+    actualizarTablas();
+    calcularManoObraEnTiempoReal();
+
+    // Si ya hay resultados visibles,
+    // recalcular solamente para actualizar la visualización.
+    const resultados =
+        document.getElementById('seccionResultados');
+
+    if (
+        resultados &&
+        resultados.style.display === 'block'
+    ) {
+        calcularCotizacion();
+    }
+}
         document.getElementById('selectorIdioma').addEventListener('change', (e) => cambiarIdiomaUI(e.target.value));
         document.getElementById('selectorMoneda').addEventListener('change', (e) => manejarCambioMoneda(e.target.value));
         document.getElementById('categoriaProducto').addEventListener('change', actualizarSugerenciasPorCategoria);
@@ -1015,6 +1093,7 @@
         document.getElementById('btn-login-trigger').addEventListener('click', ejecutarLogin);
         document.getElementById('btn-reg-trigger').addEventListener('click', ejecutarRegistro);
         document.getElementById('btn-google-reg').addEventListener('click', ejecutarLoginGoogle);
+        document.getElementById('btn-google-login').addEventListener('click', ejecutarLoginGoogle);
         document.getElementById('btn-actualizar-nombre-perfil').addEventListener('click', actualizarPerfilUsuario);
         document.getElementById('btn-logout-trigger').addEventListener('click', ejecutarLogout);
 
@@ -1047,53 +1126,311 @@
             return Number.isFinite(numero) ? numero : defecto;
         }
 
-        function agregarItem(tipo) {
-            if (tipo === 'indirecto') {
-                const nombreInput = document.getElementById('nombreIndirecto');
-                const costoInput = document.getElementById('costoIndirecto');
+        // ============================================================
+// NORMALIZACIÓN DEL INVENTARIO
+// ============================================================
+// Todos los costos se guardan internamente en COP.
+// Si encontramos datos antiguos que todavía usan "costo"
+// o "costoRealUsado", los convertimos una sola vez.
+// ============================================================
 
-                const nombre = nombreInput.value.trim();
-                const costo = numeroSeguro(costoInput.value);
+function normalizarItemIngredienteEmpaque(
+    item,
+    monedaOrigen = 'COP'
+) {
 
-                if (nombre === '') { alert("Escribe el concepto del costo indirecto."); return; }
-                if (costo <= 0) { alert("El costo debe ser mayor que cero."); return; }
+    const costoBaseExistente =
+        numeroSeguro(item.costoBase, NaN);
 
-                const nuevoItem = { id: Date.now() + Math.random(), nombre, costo };
-                INVENTARIO.indirectos.push(nuevoItem);
+    const costoRealUsadoBaseExistente =
+        numeroSeguro(item.costoRealUsadoBase, NaN);
 
-                nombreInput.value = ''; costoInput.value = '';
-                nombreInput.focus();
-                actualizarTablas();
-                recalcularSiSeccionActiva();
-                return;
-            }
+    const costoBase =
+        Number.isFinite(costoBaseExistente)
+            ? costoBaseExistente
+            : convertirABase(
+                numeroSeguro(item.costo, 0),
+                monedaOrigen
+            );
 
-            const prefijo = tipo === 'ingrediente' ? 'Ingrediente' : 'Empaque';
-            const nombreInput = document.getElementById(`nombre${prefijo}`);
-            const costoInput = document.getElementById(`costo${prefijo}`);
-            const cantTotalInput = document.getElementById(`cantTotal${prefijo}`);
-            const cantUsadaInput = document.getElementById(`cantUsada${prefijo}`);
+    const costoRealUsadoBase =
+        Number.isFinite(costoRealUsadoBaseExistente)
+            ? costoRealUsadoBaseExistente
+            : convertirABase(
+                numeroSeguro(item.costoRealUsado, 0),
+                monedaOrigen
+            );
 
-            const nombre = nombreInput.value.trim();
-            const costo = numeroSeguro(costoInput.value);
-            const cantTotal = numeroSeguro(cantTotalInput.value);
-            const cantUsada = numeroSeguro(cantUsadaInput.value);
+    return {
+        ...item,
+        costoBase: numeroSeguro(costoBase, 0),
+        costoRealUsadoBase: numeroSeguro(
+            costoRealUsadoBase,
+            0
+        )
+    };
+}
 
-            if (nombre === '') { alert("Escribe el nombre del material."); return; }
-            if (cantTotal <= 0) { alert("La cantidad comprada debe ser mayor que cero."); return; }
-            if (cantUsada <= 0) { alert("La cantidad usada debe ser mayor que cero."); return; }
 
-            const costoRealUsado = (costo * cantUsada) / cantTotal;
-            const nuevoItem = { id: Date.now() + Math.random(), nombre, costo, cantTotal, cantUsada, costoRealUsado };
+function normalizarItemIndirecto(
+    item,
+    monedaOrigen = 'COP'
+) {
 
-            if (tipo === 'ingrediente') INVENTARIO.ingredientes.push(nuevoItem);
-            else INVENTARIO.empaques.push(nuevoItem);
+    const costoBaseExistente =
+        numeroSeguro(item.costoBase, NaN);
 
-            nombreInput.value = ''; costoInput.value = ''; cantTotalInput.value = ''; cantUsadaInput.value = '';
-            nombreInput.focus();
-            actualizarTablas();
-            recalcularSiSeccionActiva();
+    const costoBase =
+        Number.isFinite(costoBaseExistente)
+            ? costoBaseExistente
+            : convertirABase(
+                numeroSeguro(item.costo, 0),
+                monedaOrigen
+            );
+
+    return {
+        ...item,
+        costoBase: numeroSeguro(costoBase, 0)
+    };
+}
+
+       function agregarItem(tipo) {
+
+    // ========================================================
+    // COSTOS INDIRECTOS
+    // ========================================================
+
+    if (tipo === 'indirecto') {
+
+        const nombreInput =
+            document.getElementById('nombreIndirecto');
+
+        const costoInput =
+            document.getElementById('costoIndirecto');
+
+        const nombre =
+            nombreInput.value.trim();
+
+        const costo =
+            numeroSeguro(costoInput.value, 0);
+
+        if (nombre === '') {
+            alert(
+                "Escribe el concepto del costo indirecto."
+            );
+            return;
         }
+
+        if (costo <= 0) {
+            alert(
+                "El costo debe ser mayor que cero."
+            );
+            return;
+        }
+
+        // Guardar siempre en COP
+        const costoBase =
+            convertirABase(costo);
+
+        if (
+            !Number.isFinite(costoBase) ||
+            costoBase < 0
+        ) {
+            alert(
+                "No se pudo calcular correctamente el costo indirecto."
+            );
+            return;
+        }
+
+        const nuevoItem = {
+            id: Date.now() + Math.random(),
+            nombre,
+            costoBase
+        };
+
+        INVENTARIO.indirectos.push(nuevoItem);
+
+        nombreInput.value = '';
+        costoInput.value = '';
+
+        nombreInput.focus();
+
+        actualizarTablas();
+        recalcularSiSeccionActiva();
+
+        return;
+    }
+
+
+    // ========================================================
+    // INGREDIENTES Y EMPAQUES
+    // ========================================================
+
+    const prefijo =
+        tipo === 'ingrediente'
+            ? 'Ingrediente'
+            : 'Empaque';
+
+    const nombreInput =
+        document.getElementById(
+            `nombre${prefijo}`
+        );
+
+    const costoInput =
+        document.getElementById(
+            `costo${prefijo}`
+        );
+
+    const cantTotalInput =
+        document.getElementById(
+            `cantTotal${prefijo}`
+        );
+
+    const cantUsadaInput =
+        document.getElementById(
+            `cantUsada${prefijo}`
+        );
+
+
+    const nombre =
+        nombreInput.value.trim();
+
+    const costo =
+        numeroSeguro(
+            costoInput.value,
+            0
+        );
+
+    const cantTotal =
+        numeroSeguro(
+            cantTotalInput.value,
+            0
+        );
+
+    const cantUsada =
+        numeroSeguro(
+            cantUsadaInput.value,
+            0
+        );
+
+
+    // ========================================================
+    // VALIDACIONES
+    // ========================================================
+
+    if (nombre === '') {
+        alert(
+            "Escribe el nombre del material."
+        );
+        return;
+    }
+
+    if (costo <= 0) {
+        alert(
+            "El costo debe ser mayor que cero."
+        );
+        return;
+    }
+
+    if (cantTotal <= 0) {
+        alert(
+            "La cantidad comprada debe ser mayor que cero."
+        );
+        return;
+    }
+
+    if (cantUsada <= 0) {
+        alert(
+            "La cantidad usada debe ser mayor que cero."
+        );
+        return;
+    }
+
+    if (cantUsada > cantTotal) {
+        alert(
+            "La cantidad utilizada no puede ser mayor que la cantidad comprada."
+        );
+        return;
+    }
+
+
+    // ========================================================
+    // CONVERTIR A MONEDA BASE COP
+    // ========================================================
+
+    const costoBase =
+        convertirABase(costo);
+
+    const costoRealUsadoBase =
+        costoBase *
+        (cantUsada / cantTotal);
+
+
+    // ========================================================
+    // PROTECCIÓN CONTRA NaN / Infinity
+    // ========================================================
+
+    if (
+        !Number.isFinite(costoBase) ||
+        !Number.isFinite(costoRealUsadoBase) ||
+        costoBase < 0 ||
+        costoRealUsadoBase < 0
+    ) {
+        alert(
+            "No se pudo calcular correctamente el costo. Revisa los valores ingresados."
+        );
+        return;
+    }
+
+
+    // ========================================================
+    // CREAR ITEM
+    // ========================================================
+
+    const nuevoItem = {
+        id: Date.now() + Math.random(),
+        nombre,
+        costoBase,
+        cantTotal,
+        cantUsada,
+        costoRealUsadoBase
+    };
+
+
+    // ========================================================
+    // GUARDAR
+    // ========================================================
+
+    if (tipo === 'ingrediente') {
+        INVENTARIO.ingredientes.push(
+            nuevoItem
+        );
+    } else {
+        INVENTARIO.empaques.push(
+            nuevoItem
+        );
+    }
+
+
+    // ========================================================
+    // LIMPIAR CAMPOS
+    // ========================================================
+
+    nombreInput.value = '';
+    costoInput.value = '';
+    cantTotalInput.value = '';
+    cantUsadaInput.value = '';
+
+    nombreInput.focus();
+
+
+    // ========================================================
+    // ACTUALIZAR
+    // ========================================================
+
+    actualizarTablas();
+    recalcularSiSeccionActiva();
+}
 
         function eliminarItem(id, tipo) {
             if (tipo === 'ingrediente') INVENTARIO.ingredientes = INVENTARIO.ingredientes.filter(item => item.id !== id);
@@ -1111,66 +1448,268 @@
         }
 
         function actualizarTablas() {
-            const tbodyIng = document.getElementById('listaIngredientes');
-            tbodyIng.innerHTML = ''; sumaIngredientes = 0;
-            INVENTARIO.ingredientes.forEach(item => {
-                sumaIngredientes += item.costoRealUsado;
-                tbodyIng.appendChild(crearFilaHTML(item, 'ingrediente'));
-            });
-            document.getElementById('totalIngredientesTexto').innerText = formatMoney(sumaIngredientes);
 
-            const tbodyEmp = document.getElementById('listaEmpaques');
-            tbodyEmp.innerHTML = ''; sumaEmpaques = 0;
-            INVENTARIO.empaques.forEach(item => {
-                sumaEmpaques += item.costoRealUsado;
-                tbodyEmp.appendChild(crearFilaHTML(item, 'empaque'));
-            });
-            document.getElementById('totalEmpaquesTexto').innerText = formatMoney(sumaEmpaques);
+    // ========================================================
+    // INGREDIENTES
+    // ========================================================
 
-            const tbodyInd = document.getElementById('listaIndirectos');
-            tbodyInd.innerHTML = ''; sumaIndirectos = 0;
-            INVENTARIO.indirectos.forEach(item => {
-                sumaIndirectos += item.costo;
-                tbodyInd.appendChild(crearFilaIndirectoHTML(item));
-            });
-            document.getElementById('totalIndirectosTexto').innerText = formatMoney(sumaIndirectos);
-        }
+    const tbodyIng =
+        document.getElementById('listaIngredientes');
+
+    tbodyIng.innerHTML = '';
+
+    sumaIngredientes = 0;
+
+    INVENTARIO.ingredientes.forEach(item => {
+
+        // Todos los costos internos están en COP
+        const costoRealUsadoBase =
+            numeroSeguro(
+                item.costoRealUsadoBase,
+                0
+            );
+
+        // Acumular siempre en moneda base
+        sumaIngredientes += costoRealUsadoBase;
+
+        // La función crearFilaHTML se encargará
+        // de mostrar el valor en la moneda seleccionada
+        tbodyIng.appendChild(
+            crearFilaHTML(
+                item,
+                'ingrediente'
+            )
+        );
+    });
+
+    document.getElementById(
+        'totalIngredientesTexto'
+    ).innerText =
+        formatMoney(sumaIngredientes);
+
+
+    // ========================================================
+    // EMPAQUES
+    // ========================================================
+
+    const tbodyEmp =
+        document.getElementById('listaEmpaques');
+
+    tbodyEmp.innerHTML = '';
+
+    sumaEmpaques = 0;
+
+    INVENTARIO.empaques.forEach(item => {
+
+        const costoRealUsadoBase =
+            numeroSeguro(
+                item.costoRealUsadoBase,
+                0
+            );
+
+        sumaEmpaques += costoRealUsadoBase;
+
+        tbodyEmp.appendChild(
+            crearFilaHTML(
+                item,
+                'empaque'
+            )
+        );
+    });
+
+    document.getElementById(
+        'totalEmpaquesTexto'
+    ).innerText =
+        formatMoney(sumaEmpaques);
+
+
+    // ========================================================
+    // COSTOS INDIRECTOS
+    // ========================================================
+
+    const tbodyInd =
+        document.getElementById('listaIndirectos');
+
+    tbodyInd.innerHTML = '';
+
+    sumaIndirectos = 0;
+
+    INVENTARIO.indirectos.forEach(item => {
+
+        const costoBase =
+            numeroSeguro(
+                item.costoBase,
+                0
+            );
+
+        sumaIndirectos += costoBase;
+
+        tbodyInd.appendChild(
+            crearFilaIndirectoHTML(item)
+        );
+    });
+
+    document.getElementById(
+        'totalIndirectosTexto'
+    ).innerText =
+        formatMoney(sumaIndirectos);
+}
 
         function crearFilaHTML(item, tipo) {
-            const fila = document.createElement('tr');
-            fila.innerHTML = `<td><strong>${item.nombre}</strong></td><td>${formatMoney(item.costo)}</td><td>${item.cantTotal}</td><td>${item.cantUsada}</td><td style="color: #b83b5e; font-weight: bold;">${formatMoney(item.costoRealUsado)}</td><td></td>`;
 
-            const btnDel = document.createElement('button');
-            btnDel.className = 'btn-delete';
-            btnDel.innerText = 'X';
-            btnDel.type = 'button';
-            btnDel.onclick = () => eliminarItem(item.id, tipo);
-            fila.lastElementChild.appendChild(btnDel);
-            return fila;
-        }
+    const fila = document.createElement('tr');
+
+    const costoBase =
+        numeroSeguro(item.costoBase, 0);
+
+    const costoRealUsadoBase =
+        numeroSeguro(item.costoRealUsadoBase, 0);
+
+    fila.innerHTML = `
+        <td>
+            <strong>${item.nombre}</strong>
+        </td>
+
+        <td>
+            ${formatMoney(costoBase)}
+        </td>
+
+        <td>
+            ${item.cantTotal}
+        </td>
+
+        <td>
+            ${item.cantUsada}
+        </td>
+
+        <td style="color: #b83b5e; font-weight: bold;">
+            ${formatMoney(costoRealUsadoBase)}
+        </td>
+
+        <td></td>
+    `;
+
+    const btnDel =
+        document.createElement('button');
+
+    btnDel.className = 'btn-delete';
+    btnDel.innerText = 'X';
+    btnDel.type = 'button';
+
+    btnDel.onclick = () =>
+        eliminarItem(item.id, tipo);
+
+    fila.lastElementChild.appendChild(btnDel);
+
+    return fila;
+}
 
         function crearFilaIndirectoHTML(item) {
-            const fila = document.createElement('tr');
-            fila.innerHTML = `<td><strong>${item.nombre}</strong></td><td style="color: #b83b5e; font-weight: bold;">${formatMoney(item.costo)}</td><td></td>`;
 
-            const btnDel = document.createElement('button');
-            btnDel.className = 'btn-delete';
-            btnDel.innerText = 'X';
-            btnDel.type = 'button';
-            btnDel.onclick = () => eliminarItem(item.id, 'indirecto');
-            fila.lastElementChild.appendChild(btnDel);
-            return fila;
-        }
+    const fila =
+        document.createElement('tr');
+
+    const costoBase =
+        numeroSeguro(item.costoBase, 0);
+
+    fila.innerHTML = `
+        <td>
+            <strong>${item.nombre}</strong>
+        </td>
+
+        <td style="color: #b83b5e; font-weight: bold;">
+            ${formatMoney(costoBase)}
+        </td>
+
+        <td></td>
+    `;
+
+    const btnDel =
+        document.createElement('button');
+
+    btnDel.className = 'btn-delete';
+    btnDel.innerText = 'X';
+    btnDel.type = 'button';
+
+    btnDel.onclick = () =>
+        eliminarItem(item.id, 'indirecto');
+
+    fila.lastElementChild.appendChild(btnDel);
+
+    return fila;
+}
 
         function calcularManoObraEnTiempoReal() {
-            const unidades = Math.max(numeroSeguro(document.getElementById('unidades').value, 1), 1);
-            const horas = numeroSeguro(document.getElementById('horas').value);
-            const precioHora = numeroSeguro(document.getElementById('precioHora').value);
-            const costoManoObraTotal = horas * precioHora;
-            const costoManoObraUnitario = unidades > 0 ? costoManoObraTotal / unidades : 0;
 
-            document.getElementById('resumenManoObra').innerText = `Mano de obra del lote completo: ${formatMoney(costoManoObraTotal)} | Impacto por unidad: ${formatMoney(costoManoObraUnitario)}`;
-        }
+    // ========================================================
+    // DATOS DE PRODUCCIÓN
+    // ========================================================
+
+    const unidades = Math.max(
+        numeroSeguro(
+            document.getElementById('unidades')?.value,
+            1
+        ),
+        1
+    );
+
+    const horas = Math.max(
+        numeroSeguro(
+            document.getElementById('horas')?.value,
+            0
+        ),
+        0
+    );
+
+
+    // ========================================================
+    // PRECIO DE LA HORA
+    // ========================================================
+    // precioHoraBase siempre está almacenado en COP.
+    // Nunca usamos directamente el valor visual del input
+    // para realizar el cálculo.
+    // ========================================================
+
+    const costoManoObraTotalBase =
+        horas * precioHoraBase;
+
+
+    const costoManoObraUnitarioBase =
+        costoManoObraTotalBase / unidades;
+
+
+    // ========================================================
+    // PROTECCIÓN CONTRA NaN / INFINITY
+    // ========================================================
+
+    if (
+        !Number.isFinite(costoManoObraTotalBase) ||
+        !Number.isFinite(costoManoObraUnitarioBase)
+    ) {
+
+        console.error(
+            'Error en cálculo de mano de obra'
+        );
+
+        return;
+    }
+
+
+    // ========================================================
+    // MOSTRAR EN LA MONEDA SELECCIONADA
+    // ========================================================
+
+    const resumen =
+        document.getElementById(
+            'resumenManoObra'
+        );
+
+    if (resumen) {
+
+        resumen.innerText =
+            `Mano de obra del lote completo: ${formatMoney(costoManoObraTotalBase)} | Impacto por unidad: ${formatMoney(costoManoObraUnitarioBase)}`;
+    }
+}
 
         function toggleMargenPersonalizado() {
             const selector = document.getElementById('tipoMargen').value;
@@ -1187,58 +1726,385 @@
         }
 
         function calcularCotizacion() {
-            const unidades = Math.max(1, parseFloat(document.getElementById('unidades').value) || 1);
-            const horas = Math.max(0, parseFloat(document.getElementById('horas').value) || 0);
-            const precioHora = Math.max(0, parseFloat(document.getElementById('precioHora').value) || 0);
-            const selector = document.getElementById('tipoMargen').value;
-            
-            // BLINDAJE TOTAL: Asignamos el margen correcto según lo que el usuario elija en el selector
-            let margen = 40; 
-            
-            if (selector === 'custom') {
-                margen = numeroSeguro(document.getElementById('margen').value, 40);
-                if (margen <= 0) margen = 1;
-                if (margen > 500) margen = 500; // Límite seguro
-            } else {
-                // Forzamos explícitamente los porcentajes correctos según la opción elegida
-                margen = Number(selector); 
-                if (isNaN(margen) || margen <= 0) {
-                    margen = 40; // Si hay algún fallo, por defecto toma 40
-                }
-            }
 
-            // Actualizamos el input de margen visualmente para que coincida
-            document.getElementById('margen').value = margen;
+    // ========================================================
+    // DATOS DE PRODUCCIÓN
+    // ========================================================
 
-            const costoManoObraTotal = horas * precioHora;
-            const costoTotalLote = sumaIngredientes + sumaEmpaques + sumaIndirectos + costoManoObraTotal;
-            const costoUnitarioTotal = costoTotalLote / unidades;
+    const unidades = Math.max(
+        1,
+        numeroSeguro(
+            document.getElementById('unidades')?.value,
+            1
+        )
+    );
 
-            // Cálculo limpio: Costo Unitario + (Costo Unitario * Margen / 100)
-            const gananciaNetaUnitaria = costoUnitarioTotal * (margen / 100);
-            const precioVentaUnitario = costoUnitarioTotal + gananciaNetaUnitaria;
+    const horas = Math.max(
+        0,
+        numeroSeguro(
+            document.getElementById('horas')?.value,
+            0
+        )
+    );
 
-            globalCalculos = {
-                costoLote: costoTotalLote,
-                costoUnitario: costoUnitarioTotal,
-                precioVenta: precioVentaUnitario,
-                gananciaNeta: gananciaNetaUnitaria,
-                unidades, horas, precioHora,
-                tipoMargen: selector,
-                margenManual: margen,
-                monedaAlGuardar: monedaActual
-            };
 
-            document.getElementById('resCostoIngredientes').innerText = formatMoney(sumaIngredientes);
-            document.getElementById('resCostoEmpaques').innerText = formatMoney(sumaEmpaques);
-            document.getElementById('resCostoIndirectos').innerText = formatMoney(sumaIndirectos);
-            document.getElementById('resManoObra').innerText = formatMoney(costoManoObraTotal);
-            document.getElementById('resCostoLote').innerText = formatMoney(costoTotalLote);
-            document.getElementById('resCostoUnitario').innerText = formatMoney(costoUnitarioTotal);
-            document.getElementById('resPrecioVenta').innerText = formatMoney(precioVentaUnitario);
-            document.getElementById('resGananciaNeta').innerText = formatMoney(gananciaNetaUnitaria);
-            document.getElementById('seccionResultados').style.display = 'block';
-        }
+    // ========================================================
+    // ACTUALIZAR PRECIO DE HORA EN MONEDA BASE
+    // ========================================================
+
+    const inputPrecioHora =
+        document.getElementById('precioHora');
+
+    if (inputPrecioHora) {
+
+        const valorVisible =
+            numeroSeguro(
+                inputPrecioHora.value,
+                0
+            );
+
+        /*
+         * El valor escrito está en la moneda actualmente
+         * seleccionada, por eso lo convertimos a COP.
+         */
+        precioHoraBase =
+            convertirABase(valorVisible);
+    }
+
+
+    // ========================================================
+    // TIPO DE MARGEN
+    // ========================================================
+
+    const selector =
+        document.getElementById('tipoMargen')?.value || '40';
+
+    let margen = 40;
+
+    if (selector === 'custom') {
+
+        margen = numeroSeguro(
+            document.getElementById('margen')?.value,
+            40
+        );
+
+    } else {
+
+        margen = numeroSeguro(
+            selector,
+            40
+        );
+    }
+
+
+    // ========================================================
+    // SEGURIDAD DEL MARGEN
+    // ========================================================
+    // Un margen de venta real nunca puede ser 100% o más,
+    // porque produciría división por cero o resultados
+    // infinitos.
+    // ========================================================
+
+    margen = Math.min(
+        Math.max(margen, 1),
+        95
+    );
+
+    const inputMargen =
+        document.getElementById('margen');
+
+    if (inputMargen) {
+        inputMargen.value = margen;
+    }
+
+
+    // ========================================================
+    // MANO DE OBRA
+    // ========================================================
+
+    const costoManoObraTotalBase =
+        horas * precioHoraBase;
+
+
+    // ========================================================
+    // COSTO TOTAL DEL LOTE
+    // ========================================================
+
+    const costoTotalLoteBase =
+        numeroSeguro(sumaIngredientes, 0) +
+        numeroSeguro(sumaEmpaques, 0) +
+        numeroSeguro(sumaIndirectos, 0) +
+        numeroSeguro(costoManoObraTotalBase, 0);
+
+
+    // ========================================================
+    // PROTECCIÓN DEL COSTO DEL LOTE
+    // ========================================================
+
+    if (
+        !Number.isFinite(costoTotalLoteBase) ||
+        costoTotalLoteBase < 0
+    ) {
+
+        console.error(
+            'Cálculo inválido: costoTotalLoteBase',
+            costoTotalLoteBase
+        );
+
+        alert(
+            'No se pudo calcular el costo total. Revisa los valores ingresados.'
+        );
+
+        return;
+    }
+
+
+    // ========================================================
+    // COSTO UNITARIO
+    // ========================================================
+
+    const costoUnitarioBase =
+        costoTotalLoteBase / unidades;
+
+
+    if (
+        !Number.isFinite(costoUnitarioBase) ||
+        costoUnitarioBase < 0
+    ) {
+
+        console.error(
+            'Cálculo inválido: costoUnitarioBase',
+            costoUnitarioBase
+        );
+
+        alert(
+            'No se pudo calcular el costo unitario.'
+        );
+
+        return;
+    }
+
+
+    // ========================================================
+    // PRECIO DE VENTA
+    // ========================================================
+    //
+    // IMPORTANTE:
+    //
+    // Antes:
+    //
+    // precio = costo + (costo × margen)
+    //
+    // Eso realmente era un RECARGO.
+    //
+    // Ahora:
+    //
+    // precio = costo / (1 - margen)
+    //
+    // Esto sí representa un MARGEN REAL sobre el precio
+    // de venta.
+    // ========================================================
+
+    const factorMargen =
+        1 - (margen / 100);
+
+
+    if (
+        factorMargen <= 0 ||
+        !Number.isFinite(factorMargen)
+    ) {
+
+        alert(
+            'El margen debe ser menor al 100%.'
+        );
+
+        return;
+    }
+
+
+    const precioVentaUnitarioBase =
+        costoUnitarioBase / factorMargen;
+
+
+    // ========================================================
+    // GANANCIA UNITARIA
+    // ========================================================
+
+    const gananciaUnitarioBase =
+        precioVentaUnitarioBase -
+        costoUnitarioBase;
+
+
+    // ========================================================
+    // PROTECCIÓN FINAL
+    // ========================================================
+
+    if (
+        !Number.isFinite(precioVentaUnitarioBase) ||
+        !Number.isFinite(gananciaUnitarioBase) ||
+        precioVentaUnitarioBase < 0 ||
+        gananciaUnitarioBase < 0
+    ) {
+
+        console.error(
+            'Cálculo inválido de precio o ganancia'
+        );
+
+        alert(
+            'No se pudo calcular correctamente el precio de venta.'
+        );
+
+        return;
+    }
+
+
+    // ========================================================
+    // CÁLCULO DE LA COTIZACIÓN
+    // ========================================================
+
+    const cantidadVender =
+        Math.max(
+            1,
+            numeroSeguro(
+                document.getElementById('cantidadVender')?.value,
+                unidades
+            )
+        );
+
+
+    const totalCotizacionBase =
+        precioVentaUnitarioBase *
+        cantidadVender;
+
+
+    const gananciaTotalBase =
+        gananciaUnitarioBase *
+        cantidadVender;
+
+
+    // ========================================================
+    // PROTECCIÓN DE LA COTIZACIÓN
+    // ========================================================
+
+    if (
+        !Number.isFinite(totalCotizacionBase) ||
+        !Number.isFinite(gananciaTotalBase)
+    ) {
+
+        console.error(
+            'Cálculo inválido de cotización'
+        );
+
+        alert(
+            'No se pudo calcular correctamente el total de la cotización.'
+        );
+
+        return;
+    }
+
+
+    // ========================================================
+    // GUARDAR CÁLCULOS
+    // ========================================================
+
+    globalCalculos = {
+
+        // Valores BASE en COP
+        costoLoteBase:
+            costoTotalLoteBase,
+
+        costoUnitarioBase:
+            costoUnitarioBase,
+
+        precioVentaUnitarioBase:
+            precioVentaUnitarioBase,
+
+        gananciaUnitarioBase:
+            gananciaUnitarioBase,
+
+        totalCotizacionBase:
+            totalCotizacionBase,
+
+        gananciaTotalBase:
+            gananciaTotalBase,
+
+        // Datos de producción
+        unidades,
+        horas,
+
+        // Precio de hora en COP
+        precioHoraBase,
+
+        // Datos del margen
+        tipoMargen: selector,
+        margenManual: margen,
+
+        // Cantidad solicitada
+        cantidadVender,
+
+        // Moneda utilizada al guardar
+        monedaAlGuardar: monedaActual
+    };
+
+
+    // ========================================================
+    // MOSTRAR RESULTADOS
+    // ========================================================
+
+    document.getElementById(
+        'resCostoIngredientes'
+    ).innerText =
+        formatMoney(sumaIngredientes);
+
+
+    document.getElementById(
+        'resCostoEmpaques'
+    ).innerText =
+        formatMoney(sumaEmpaques);
+
+
+    document.getElementById(
+        'resCostoIndirectos'
+    ).innerText =
+        formatMoney(sumaIndirectos);
+
+
+    document.getElementById(
+        'resManoObra'
+    ).innerText =
+        formatMoney(costoManoObraTotalBase);
+
+
+    document.getElementById(
+        'resCostoLote'
+    ).innerText =
+        formatMoney(costoTotalLoteBase);
+
+
+    document.getElementById(
+        'resCostoUnitario'
+    ).innerText =
+        formatMoney(costoUnitarioBase);
+
+
+    document.getElementById(
+        'resPrecioVenta'
+    ).innerText =
+        formatMoney(precioVentaUnitarioBase);
+
+
+    document.getElementById(
+        'resGananciaNeta'
+    ).innerText =
+        formatMoney(gananciaUnitarioBase);
+
+
+    // Mostrar resultados
+    document.getElementById(
+        'seccionResultados'
+    ).style.display = 'block';
+}
+
         async function guardarRecetaEnStorage() {
             const nombreReceta = document.getElementById('nombreReceta').value.trim();
             if (nombreReceta === '') { alert("Escribe el nombre del producto."); return; }
@@ -1355,38 +2221,354 @@
         }
 
         function cargarRecetaEspecifica(receta) {
-            document.getElementById('nombreReceta').value = receta.nombre;
-            document.getElementById('categoriaProducto').value = receta.categoria || 'jabones';
-            
-            document.getElementById('pesoArticulo').value = receta.peso || '';
-            document.getElementById('unidadPeso').value = receta.unidadPeso || 'g';
-            document.getElementById('cantidadVender').value = receta.cantidadVender || 1;
-            document.getElementById('fechaFabricacion').value = receta.fechaFabricacion || '';
 
-            actualizarSugerenciasPorCategoria();
+    if (!receta || typeof receta !== 'object') {
+        console.error('Receta inválida:', receta);
 
-            INVENTARIO.ingredientes = receta.ingredientes || [];
-            INVENTARIO.empaques = receta.empaques || [];
-            INVENTARIO.indirectos = receta.indirectos || [];
+        alert(
+            'No se pudo cargar la cotización seleccionada.'
+        );
 
-            const monedaGuardada = receta.calculos.monedaAlGuardar || 'COP';
-            monedaActual = monedaGuardada;
-            document.getElementById('selectorMoneda').value = monedaGuardada;
+        return;
+    }
 
-            document.getElementById('unidades').value = receta.calculos.unidades;
-            document.getElementById('horas').value = receta.calculos.horas;
-            document.getElementById('precioHora').value = receta.calculos.precioHora;
-            document.getElementById('tipoMargen').value = receta.calculos.tipoMargen;
-            document.getElementById('margen').value = receta.calculos.margenManual;
+    // ============================================================
+    // DATOS GENERALES DEL PRODUCTO
+    // ============================================================
 
-            toggleMargenPersonalizado();
-            actualizarEtiquetasMoneda();
-            actualizarTablas();
-            calcularManoObraEnTiempoReal();
-            calcularCotizacion();
-            cerrarModalRecetas();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+    const nombreReceta =
+        document.getElementById('nombreReceta');
+
+    const categoriaProducto =
+        document.getElementById('categoriaProducto');
+
+    const pesoArticulo =
+        document.getElementById('pesoArticulo');
+
+    const unidadPeso =
+        document.getElementById('unidadPeso');
+
+    const cantidadVender =
+        document.getElementById('cantidadVender');
+
+    const fechaFabricacion =
+        document.getElementById('fechaFabricacion');
+
+    if (nombreReceta) {
+        nombreReceta.value =
+            receta.nombre || '';
+    }
+
+    if (categoriaProducto) {
+        categoriaProducto.value =
+            receta.categoria || 'jabones';
+    }
+
+    if (pesoArticulo) {
+        pesoArticulo.value =
+            receta.peso ?? '';
+    }
+
+    if (unidadPeso) {
+        unidadPeso.value =
+            receta.unidadPeso || 'g';
+    }
+
+    if (cantidadVender) {
+        cantidadVender.value =
+            Math.max(
+                1,
+                numeroSeguro(
+                    receta.cantidadVender,
+                    1
+                )
+            );
+    }
+
+    if (fechaFabricacion) {
+        fechaFabricacion.value =
+            receta.fechaFabricacion || '';
+    }
+
+    // Actualizar ingredientes sugeridos según categoría
+    actualizarSugerenciasPorCategoria();
+
+
+    // ============================================================
+    // DATOS DE LA COTIZACIÓN
+    // ============================================================
+
+    const calculos =
+        receta.calculos &&
+        typeof receta.calculos === 'object'
+            ? receta.calculos
+            : {};
+
+    // La moneda en la que se guardó la receta.
+    // Si no existe, asumimos COP para recetas antiguas.
+    const monedaGuardada =
+        paisesConfig[
+            calculos.monedaAlGuardar
+        ]
+            ? calculos.monedaAlGuardar
+            : 'COP';
+
+
+    // ============================================================
+    // MIGRACIÓN DE INGREDIENTES
+    // ============================================================
+
+    INVENTARIO.ingredientes =
+        Array.isArray(receta.ingredientes)
+            ? receta.ingredientes.map(item =>
+                normalizarItemIngredienteEmpaque(
+                    item,
+                    monedaGuardada
+                )
+            )
+            : [];
+
+
+    // ============================================================
+    // MIGRACIÓN DE EMPAQUES
+    // ============================================================
+
+    INVENTARIO.empaques =
+        Array.isArray(receta.empaques)
+            ? receta.empaques.map(item =>
+                normalizarItemIngredienteEmpaque(
+                    item,
+                    monedaGuardada
+                )
+            )
+            : [];
+
+
+    // ============================================================
+    // MIGRACIÓN DE COSTOS INDIRECTOS
+    // ============================================================
+
+    INVENTARIO.indirectos =
+        Array.isArray(receta.indirectos)
+            ? receta.indirectos.map(item =>
+                normalizarItemIndirecto(
+                    item,
+                    monedaGuardada
+                )
+            )
+            : [];
+
+
+    // ============================================================
+    // MONEDA
+    // ============================================================
+
+    monedaActual = monedaGuardada;
+
+    localStorage.setItem(
+        'cotizador_moneda',
+        monedaActual
+    );
+
+    const selectorMoneda =
+        document.getElementById('selectorMoneda');
+
+    if (selectorMoneda) {
+        selectorMoneda.value =
+            monedaActual;
+    }
+
+
+    // ============================================================
+    // UNIDADES
+    // ============================================================
+
+    const unidadesGuardadas =
+        Math.max(
+            1,
+            numeroSeguro(
+                calculos.unidades,
+                1
+            )
+        );
+
+    const inputUnidades =
+        document.getElementById('unidades');
+
+    if (inputUnidades) {
+        inputUnidades.value =
+            unidadesGuardadas;
+    }
+
+
+    // ============================================================
+    // HORAS
+    // ============================================================
+
+    const horasGuardadas =
+        Math.max(
+            0,
+            numeroSeguro(
+                calculos.horas,
+                0
+            )
+        );
+
+    const inputHoras =
+        document.getElementById('horas');
+
+    if (inputHoras) {
+        inputHoras.value =
+            horasGuardadas;
+    }
+
+
+    // ============================================================
+    // PRECIO DE LA HORA
+    // ============================================================
+
+    /*
+     * Las recetas nuevas guardan precioHoraBase.
+     *
+     * Las recetas antiguas pueden tener solamente precioHora,
+     * que estaba guardado en la moneda seleccionada.
+     */
+
+    if (
+        Number.isFinite(
+            Number(calculos.precioHoraBase)
+        ) &&
+        Number(calculos.precioHoraBase) >= 0
+    ) {
+
+        precioHoraBase =
+            numeroSeguro(
+                calculos.precioHoraBase,
+                0
+            );
+
+    } else {
+
+        precioHoraBase =
+            convertirABase(
+                numeroSeguro(
+                    calculos.precioHora,
+                    0
+                ),
+                monedaGuardada
+            );
+    }
+
+    const inputPrecioHora =
+        document.getElementById('precioHora');
+
+    if (inputPrecioHora) {
+        inputPrecioHora.value =
+            formatearInputMoneda(
+                precioHoraBase
+            );
+    }
+
+
+    // ============================================================
+    // TIPO DE MARGEN
+    // ============================================================
+
+    const tipoMargen =
+        calculos.tipoMargen || '40';
+
+    const selectorMargen =
+        document.getElementById('tipoMargen');
+
+    if (selectorMargen) {
+
+        /*
+         * Si la receta antigua tiene un tipo de margen
+         * válido, lo conservamos.
+         */
+
+        const existeOpcion =
+            Array.from(
+                selectorMargen.options
+            ).some(
+                option =>
+                    option.value === tipoMargen
+            );
+
+        selectorMargen.value =
+            existeOpcion
+                ? tipoMargen
+                : '40';
+    }
+
+
+    // ============================================================
+    // MARGEN PERSONALIZADO
+    // ============================================================
+
+    const margenGuardado =
+        numeroSeguro(
+            calculos.margenManual,
+            40
+        );
+
+    const inputMargen =
+        document.getElementById('margen');
+
+    if (inputMargen) {
+
+        inputMargen.value =
+            Math.min(
+                Math.max(
+                    margenGuardado,
+                    1
+                ),
+                95
+            );
+    }
+
+
+    // ============================================================
+    // ACTUALIZAR INTERFAZ
+    // ============================================================
+
+    toggleMargenPersonalizado();
+
+    actualizarEtiquetasMoneda();
+
+    actualizarTablas();
+
+    calcularManoObraEnTiempoReal();
+
+
+    // ============================================================
+    // RECALCULAR TODO
+    // ============================================================
+
+    /*
+     * No utilizamos directamente los cálculos antiguos.
+     *
+     * Volvemos a calcular desde los costos normalizados.
+     * Esto evita recuperar valores contaminados por el
+     * sistema anterior de conversión de monedas.
+     */
+
+    calcularCotizacion();
+
+
+    // ============================================================
+    // CERRAR HISTORIAL
+    // ============================================================
+
+    cerrarModalRecetas();
+
+
+    // Volver al comienzo de la aplicación
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
 
         document.getElementById('btn-add-ingrediente').addEventListener('click', () => agregarItem('ingrediente'));
         document.getElementById('btn-add-empaque').addEventListener('click', () => agregarItem('empaque'));
@@ -1404,7 +2586,20 @@
 
         document.getElementById('unidades').addEventListener('input', () => { calcularManoObraEnTiempoReal(); recalcularSiSeccionActiva(); });
         document.getElementById('horas').addEventListener('input', () => { calcularManoObraEnTiempoReal(); recalcularSiSeccionActiva(); });
-        document.getElementById('precioHora').addEventListener('input', () => { calcularManoObraEnTiempoReal(); recalcularSiSeccionActiva(); });
+        document.getElementById('precioHora').addEventListener('input', () => {
+
+    const valorIngresado = numeroSeguro(
+        document.getElementById('precioHora').value,
+        0
+    );
+
+    // Guardamos el precio de la hora en COP.
+    // El valor visible puede estar en USD, EUR, ILS, etc.
+    precioHoraBase = convertirABase(valorIngresado);
+
+    calcularManoObraEnTiempoReal();
+    recalcularSiSeccionActiva();
+});
         document.getElementById('tipoMargen').addEventListener('change', () => { toggleMargenPersonalizado(); recalcularSiSeccionActiva(); });
         document.getElementById('margen').addEventListener('input', recalcularSiSeccionActiva);
 
