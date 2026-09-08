@@ -926,7 +926,11 @@ function manejarCambioMoneda(nuevaMoneda) {
             }
 
             try {
-                const q = query(collection(db, "codigos_acceso"), where("codigo", "==", codigoIngresado));
+                const q = query(
+    collection(db, "codigos_acceso"),
+    where("codigo", "==", codigoIngresado),
+    where("usado", "==", false)
+);
                 const querySnapshot = await getDocs(q);
 
                 if (querySnapshot.empty) {
