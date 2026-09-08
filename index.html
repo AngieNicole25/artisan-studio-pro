@@ -2246,50 +2246,299 @@ function normalizarItemIndirecto(
         }
 
         async function cargarHistorialDOM() {
-            const tbody = document.getElementById('listaRecetasGuardadas');
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #777;">Cargando desde la nube...</td></tr>`;
 
-            try {
-                const q = query(collection(db, "productos_guardados"), where("userId", "==", usuarioActivoUid));
-                const querySnapshot = await getDocs(q);
+    const tbody =
+        document.getElementById('listaRecetasGuardadas');
 
-                if (querySnapshot.empty) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #777;">No tienes productos guardados aún.</td></tr>`;
-                    return;
-                }
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="5"
+                style="text-align: center; color: #777;">
+                Cargando desde la nube...
+            </td>
+        </tr>
+    `;
 
-                tbody.innerHTML = '';
-                querySnapshot.forEach((documento) => {
-                    const receta = documento.data();
-                    const docId = documento.id;
-                    const tempMoneda = receta.calculos.monedaAlGuardar || 'COP';
-                    const configHistorica = paisesConfig[tempMoneda] || { locale: "es-CO", moneda: tempMoneda };
-                    const formatterHistorico = new Intl.NumberFormat(configHistorica.locale, { style: 'currency', currency: tempMoneda });
+    try {
 
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td><strong>${receta.nombre}</strong> <small style="color:#888;">(${tempMoneda})</small></td><td>${formatterHistorico.format(receta.calculos.costoLote)}</td><td>${formatterHistorico.format(receta.calculos.costoUnitario)}</td><td style="color:#c0392b; font-weight:bold;">${formatterHistorico.format(receta.calculos.precioVenta)}</td><td style="text-align: center; display: flex; gap: 5px; justify-content: center;"></td>`;
+        const q = query(
+            collection(db, "productos_guardados"),
+            where(
+                "userId",
+                "==",
+                usuarioActivoUid
+            )
+        );
 
-                    const btnLoad = document.createElement('button');
-                    btnLoad.className = 'btn-load';
-                    btnLoad.innerText = '📂 Cargar';
-                    btnLoad.type = 'button';
-                    btnLoad.onclick = () => cargarRecetaEspecifica(receta);
+        const querySnapshot =
+            await getDocs(q);
 
-                    const btnDel = document.createElement('button');
-                    btnDel.className = 'btn-delete';
-                    btnDel.innerText = 'Borrar';
-                    btnDel.type = 'button';
-                    btnDel.onclick = () => eliminarRecetaStorage(docId, receta.nombre);
+        if (querySnapshot.empty) {
 
-                    tr.lastElementChild.appendChild(btnLoad);
-                    tr.lastElementChild.appendChild(btnDel);
-                    tbody.appendChild(tr);
-                });
-            } catch (error) {
-                console.error("Error al cargar historial:", error);
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #e74c3c;">Error al cargar datos.</td></tr>`;
-            }
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5"
+                        style="text-align: center; color: #777;">
+                        No tienes productos guardados aún.
+                    </td>
+                </tr>
+            `;
+
+            return;
         }
+
+        tbody.innerHTML = '';
+
+        querySnapshot.forEach((documento) => {
+
+            const receta =
+                documento.data();
+
+            const docId =
+                documento.id;
+
+            const calculos =
+                receta.calculos &&
+                typeof receta.calculos === 'object'
+                    ? receta.calculos
+                    : {};
+
+            // ====================================================
+            // COMPATIBILIDAD CON RECETAS NUEVAS Y ANTIGUAS
+            // ====================================================
+
+            const monedaGuardada =
+                paisesConfig[
+                    calculos.monedaAlGuardar
+                ]
+                    ? calculos.monedaAlGuardar
+                    : 'COP';
+
+            const configHistorica =
+                paisesConfig[monedaGuardada]
+                    || paisesConfig.COP;
+
+            const formatterHistorico =
+                new Intl.NumberFormat(
+                    configHistorica.locale,
+                    {
+                        style: 'currency',
+                        currency: monedaGuardada,
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }
+                );
+
+            // ====================================================
+            // OBTENER VALORES
+            // ====================================================
+
+            // Recetas nuevas
+            const costoLoteBase =
+                numeroSeguro(
+                    calculos.costoLoteBase,
+                    NaN
+                );
+
+            const costoUnitarioBase =
+                numeroSeguro(
+                    calculos.costoUnitarioBase,
+                    NaN
+                );
+
+            const precioVentaUnitarioBase =
+                numeroSeguro(
+                    calculos.precioVentaUnitarioBase,
+                    NaN
+                );
+
+            // ====================================================
+            // COMPATIBILIDAD CON RECETAS ANTIGUAS
+            // ====================================================
+
+            const costoLote =
+                Number.isFinite(costoLoteBase)
+                    ? costoLoteBase
+                    : numeroSeguro(
+                        calculos.costoLote,
+                        0
+                    );
+
+            const costoUnitario =
+                Number.isFinite(costoUnitarioBase)
+                    ? costoUnitarioBase
+                    : numeroSeguro(
+                        calculos.costoUnitario,
+                        0
+                    );
+
+            const precioVenta =
+                Number.isFinite(
+                    precioVentaUnitarioBase
+                )
+                    ? precioVentaUnitarioBase
+                    : numeroSeguro(
+                        calculos.precioVenta,
+                        0
+                    );
+
+            // ====================================================
+            // CONVERTIR DESDE LA BASE COP
+            // ====================================================
+
+            const costoLoteMostrar =
+                convertirDesdeBase(
+                    costoLote,
+                    monedaGuardada
+                );
+
+            const costoUnitarioMostrar =
+                convertirDesdeBase(
+                    costoUnitario,
+                    monedaGuardada
+                );
+
+            const precioVentaMostrar =
+                convertirDesdeBase(
+                    precioVenta,
+                    monedaGuardada
+                );
+
+            // ====================================================
+            // CREAR FILA
+            // ====================================================
+
+            const tr =
+                document.createElement('tr');
+
+            tr.innerHTML = `
+                <td>
+                    <strong>
+                        ${receta.nombre || 'Sin nombre'}
+                    </strong>
+
+                    <small style="color:#888;">
+                        (${monedaGuardada})
+                    </small>
+                </td>
+
+                <td>
+                    ${formatterHistorico.format(
+                        Number.isFinite(
+                            costoLoteMostrar
+                        )
+                            ? costoLoteMostrar
+                            : 0
+                    )}
+                </td>
+
+                <td>
+                    ${formatterHistorico.format(
+                        Number.isFinite(
+                            costoUnitarioMostrar
+                        )
+                            ? costoUnitarioMostrar
+                            : 0
+                    )}
+                </td>
+
+                <td style="
+                    color:#c0392b;
+                    font-weight:bold;
+                ">
+                    ${formatterHistorico.format(
+                        Number.isFinite(
+                            precioVentaMostrar
+                        )
+                            ? precioVentaMostrar
+                            : 0
+                    )}
+                </td>
+
+                <td style="
+                    text-align:center;
+                    display:flex;
+                    gap:5px;
+                    justify-content:center;
+                "></td>
+            `;
+
+            // ====================================================
+            // BOTÓN CARGAR
+            // ====================================================
+
+            const btnLoad =
+                document.createElement('button');
+
+            btnLoad.className =
+                'btn-load';
+
+            btnLoad.innerText =
+                '📂 Cargar';
+
+            btnLoad.type =
+                'button';
+
+            btnLoad.onclick = () =>
+                cargarRecetaEspecifica(receta);
+
+            // ====================================================
+            // BOTÓN BORRAR
+            // ====================================================
+
+            const btnDel =
+                document.createElement('button');
+
+            btnDel.className =
+                'btn-delete';
+
+            btnDel.innerText =
+                'Borrar';
+
+            btnDel.type =
+                'button';
+
+            btnDel.onclick = () =>
+                eliminarRecetaStorage(
+                    docId,
+                    receta.nombre
+                );
+
+            // ====================================================
+            // AGREGAR BOTONES
+            // ====================================================
+
+            tr.lastElementChild.appendChild(
+                btnLoad
+            );
+
+            tr.lastElementChild.appendChild(
+                btnDel
+            );
+
+            tbody.appendChild(tr);
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Error al cargar historial:",
+            error
+        );
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5"
+                    style="
+                        text-align: center;
+                        color: #e74c3c;
+                    ">
+                    Error al cargar datos.
+                </td>
+            </tr>
+        `;
+    }
+}
 
         async function eliminarRecetaStorage(docId, nombre) {
             if (!confirm(`¿Eliminar "${nombre}" de la nube?`)) return;
