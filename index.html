@@ -646,21 +646,32 @@ let precioHoraBase = 5000;
     actualizarEtiquetasMoneda();
 }
 
-        function formatMoney(amount) {
-            if (amount === null || amount === undefined || isNaN(amount)) amount = 0;
-            
-            // Redondeamos el monto para eliminar decimales o centavos por completo
-            const valorRedondeado = Math.round(amount);
-            
-            const config = paisesConfig[monedaActual] || { locale: "es-CO", moneda: monedaActual };
-            
-            return new Intl.NumberFormat(config.locale, { 
-                style: 'currency', 
-                currency: monedaActual,
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(valorRedondeado);
+        function formatMoney(valorBase) {
+
+    const valorConvertido =
+        convertirDesdeBase(valorBase);
+
+    const config =
+        paisesConfig[monedaActual] ||
+        paisesConfig.COP;
+
+    const valorSeguro =
+        Number.isFinite(valorConvertido)
+            ? valorConvertido
+            : 0;
+
+    return new Intl.NumberFormat(
+        config.locale,
+        {
+            style: 'currency',
+            currency: monedaActual,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
         }
+    ).format(
+        Math.round(valorSeguro)
+    );
+}
 
         function actualizarSugerenciasPorCategoria() {
             const categoriaSeleccionada = document.getElementById('categoriaProducto').value;
@@ -1126,11 +1137,78 @@ function manejarCambioMoneda(nuevaMoneda) {
         let globalCalculos = {};
 
         function numeroSeguro(valor, defecto = 0) {
-            const numero = Number(valor);
-            return Number.isFinite(numero) ? numero : defecto;
-        }
+    const numero = Number(valor);
+    return Number.isFinite(numero) ? numero : defecto;
+}
 
-        // ============================================================
+
+// ============================================================
+// CONVERSIÓN SEGURA DE MONEDAS
+// ============================================================
+// Los valores internos SIEMPRE se almacenan en COP.
+// La moneda seleccionada solamente cambia lo que se muestra.
+// ============================================================
+
+function obtenerTasa(moneda = monedaActual) {
+
+    const tasa = Number(
+        paisesConfig[moneda]?.tasa
+    );
+
+    return Number.isFinite(tasa) && tasa > 0
+        ? tasa
+        : 1;
+}
+
+
+function convertirABase(valor, moneda = monedaActual) {
+
+    const numero = numeroSeguro(valor, 0);
+
+    const resultado =
+        numero / obtenerTasa(moneda);
+
+    return Number.isFinite(resultado)
+        ? resultado
+        : 0;
+}
+
+
+function convertirDesdeBase(
+    valorBase,
+    moneda = monedaActual
+) {
+
+    const numero =
+        numeroSeguro(valorBase, 0);
+
+    const resultado =
+        numero * obtenerTasa(moneda);
+
+    return Number.isFinite(resultado)
+        ? resultado
+        : 0;
+}
+
+
+function formatearInputMoneda(valorBase) {
+
+    const valorConvertido =
+        convertirDesdeBase(valorBase);
+
+    if (!Number.isFinite(valorConvertido)) {
+        return "0";
+    }
+
+    return String(
+        Number(
+            valorConvertido.toFixed(2)
+        )
+    );
+}
+
+
+// ============================================================
 // NORMALIZACIÓN DEL INVENTARIO
 // ============================================================
 // Todos los costos se guardan internamente en COP.
