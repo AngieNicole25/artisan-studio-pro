@@ -780,11 +780,11 @@ function manejarCambioMoneda(nuevaMoneda) {
                 document.getElementById('seccion-auth').style.display = 'none';
                 document.getElementById('contenidoApp').style.display = 'block';
 
-                const tuCorreoAdmin = "angieandrade9601@gmail.com";
+                const CORREO_ADMIN = "angieandrade9601@gmail.com";
                 const contenedorAdmin = document.getElementById('btn-generar-codigo-admin').closest('.form-group');
                 const tituloAdmin = contenedorAdmin.previousElementSibling; 
 
-                if (user.email === tuCorreoAdmin) {
+                if (user.email === CORREO_ADMIN) {
                     contenedorAdmin.style.display = 'block';
                     if (tituloAdmin) tituloAdmin.style.display = 'block';
                 } else {
